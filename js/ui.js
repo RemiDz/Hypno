@@ -608,6 +608,45 @@ export class UIManager {
         if (clearDataBtn) {
             clearDataBtn.addEventListener('click', () => this.clearLocalData());
         }
+        
+        // Reset app button (clears everything and reloads)
+        const resetAppBtn = document.getElementById('setting-reset-app');
+        if (resetAppBtn) {
+            resetAppBtn.addEventListener('click', () => this.resetAppCompletely());
+        }
+    }
+    
+    resetAppCompletely() {
+        if (confirm('This will clear all your data and reload the app. Are you sure?')) {
+            // Clear all localStorage
+            localStorage.clear();
+            
+            // Clear any sessionStorage
+            sessionStorage.clear();
+            
+            // Unregister service worker if present
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(registration => {
+                        registration.unregister();
+                    });
+                });
+            }
+            
+            // Clear caches
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        caches.delete(name);
+                    });
+                });
+            }
+            
+            // Reload the page after a small delay to ensure cleanup
+            setTimeout(() => {
+                window.location.reload(true);
+            }, 100);
+        }
     }
     
     openSettingsMenu() {

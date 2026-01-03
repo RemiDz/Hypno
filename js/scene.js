@@ -771,25 +771,31 @@ export class CosmicScene {
         const intersects = this.raycaster.intersectObjects(clickableObjects, true);
         
         if (intersects.length > 0) {
-            let object = intersects[0].object;
+            // Check ALL intersections - prioritize user shapes over sacred geometry
+            let userHit = null;
+            let sacredGeometryHit = null;
             
-            // Check for sacred geometry first
-            while (object && !object.userData.isSacredGeometry && !object.userData.userId) {
-                object = object.parent;
-            }
-            
-            // Handle sacred geometry click
-            if (object && object.userData.isSacredGeometry) {
-                const geometryId = object.userData.sacredGeometryId;
-                if (geometryId && this.onSacredGeometryClicked) {
-                    this.onSacredGeometryClicked(geometryId);
+            for (const intersect of intersects) {
+                let object = intersect.object;
+                
+                // Walk up the parent chain to find the root with userData
+                while (object) {
+                    if (object.userData.userId && !userHit) {
+                        userHit = { userId: object.userData.userId, distance: intersect.distance };
+                    }
+                    if (object.userData.isSacredGeometry && !sacredGeometryHit) {
+                        sacredGeometryHit = { geometryId: object.userData.sacredGeometryId, distance: intersect.distance };
+                    }
+                    object = object.parent;
                 }
-                return;
+                
+                // If we found a user, we can stop (users take priority)
+                if (userHit) break;
             }
             
-            // Handle user click
-            if (object && object.userData.userId) {
-                const userId = object.userData.userId;
+            // Handle user click first (priority over sacred geometry)
+            if (userHit) {
+                const userId = userHit.userId;
                 
                 if (userId === this.selfId) {
                     if (this.onSelfClicked) {
@@ -800,6 +806,15 @@ export class CosmicScene {
                     if (this.onUserClicked) {
                         this.onUserClicked(userId);
                     }
+                }
+                return;
+            }
+            
+            // Handle sacred geometry click (only if no user was hit)
+            if (sacredGeometryHit) {
+                const geometryId = sacredGeometryHit.geometryId;
+                if (geometryId && this.onSacredGeometryClicked) {
+                    this.onSacredGeometryClicked(geometryId);
                 }
             }
         }
