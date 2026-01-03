@@ -141,34 +141,35 @@
 
 .welcome-modal {
     text-align: center;
-    padding: var(--space-3xl) var(--space-2xl);
+    padding: var(--space-2xl) var(--space-xl);
 }
 
 .welcome-title {
     font-family: var(--font-display);
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 400;
     letter-spacing: 0.08em;
     margin-bottom: var(--space-md);
-    background: linear-gradient(135deg, #fff 0%, var(--primary-start) 50%, var(--primary-end) 100%);
-    background-size: 200% 100%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: title-shimmer 4s ease-in-out infinite;
+    color: #ffffff; /* Fallback solid color */
+    text-shadow: 0 0 20px rgba(139, 92, 246, 0.5);
 }
 
-@keyframes title-shimmer {
-    0%, 100% { background-position: 0% center; }
-    50% { background-position: 100% center; }
+/* Gradient text only for browsers that support it well */
+@supports (-webkit-background-clip: text) and (not (-moz-appearance: none)) {
+    .welcome-title {
+        background: linear-gradient(135deg, #fff 0%, #8B5CF6 50%, #EC4899 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
 }
 
 .welcome-subtitle {
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 300;
-    color: var(--star-dim);
-    line-height: 1.7;
-    margin-bottom: var(--space-2xl);
+    color: rgba(255, 255, 255, 0.75); /* More visible */
+    line-height: 1.6;
+    margin-bottom: var(--space-xl);
     max-width: 380px;
     margin-left: auto;
     margin-right: auto;
@@ -179,56 +180,56 @@
    ============================================ */
 
 .form-group {
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-lg);
     text-align: left;
 }
 
 .form-group label {
     display: block;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 500;
-    letter-spacing: 0.1em;
-    color: var(--star-dim);
-    margin-bottom: var(--space-sm);
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.7); /* More visible */
+    margin-bottom: var(--space-xs);
     text-transform: uppercase;
 }
 
 .cosmic-input,
 .cosmic-textarea {
     width: 100%;
-    padding: var(--space-md) var(--space-lg);
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius-lg);
-    color: var(--star-white);
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.08); /* More visible */
+    border: 1px solid rgba(255, 255, 255, 0.2); /* More visible border */
+    border-radius: 12px;
+    color: #ffffff;
     font-family: var(--font-body);
     font-size: 16px;
     font-weight: 400;
-    transition: all var(--transition-normal);
+    transition: all 0.2s ease;
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
+    box-sizing: border-box;
 }
 
 .cosmic-input::placeholder,
 .cosmic-textarea::placeholder {
-    color: var(--star-faint);
+    color: rgba(255, 255, 255, 0.4); /* More visible placeholder */
     font-weight: 300;
 }
 
 .cosmic-input:focus,
 .cosmic-textarea:focus {
-    background: rgba(139, 92, 246, 0.08);
-    border-color: var(--primary-start);
-    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12),
-                0 0 30px rgba(139, 92, 246, 0.1);
+    background: rgba(139, 92, 246, 0.15);
+    border-color: #8B5CF6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
     outline: none;
 }
 
 .cosmic-textarea {
-    min-height: 90px;
+    min-height: 80px;
     resize: vertical;
-    line-height: 1.6;
+    line-height: 1.5;
 }
 
 /* ============================================

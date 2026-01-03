@@ -168,6 +168,11 @@ export class UIManager {
     showWelcome() {
         this.hideLoading();
         showElement(this.welcomeModal, true);
+        
+        // On mobile, show settings button right away so users can access joystick/gyro settings
+        if (this.isMobile() && this.settingsBtn) {
+            this.settingsBtn.classList.remove('hidden');
+        }
     }
     
     async onEnterClick() {
