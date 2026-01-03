@@ -41,6 +41,7 @@ export class SacredGeometryGroup {
         this.layers = []; // Multiple layers of geometry
         this.particles = null;
         this.innerGlow = null;
+        this.pointLight = null;
         this.outerRings = [];
         
         // Audio
@@ -749,30 +750,39 @@ export class SacredGeometryGroup {
     // ========================
     
     createCentralGlow(color) {
-        // Central energy sphere
-        const geometry = new THREE.SphereGeometry(3, 32, 32);
-        const material = new THREE.MeshBasicMaterial({
+        // Create a small bright point at center (no solid sphere)
+        const dotGeometry = new THREE.CircleGeometry(1.5, 32);
+        const dotMaterial = new THREE.MeshBasicMaterial({
             color: color,
             transparent: true,
-            opacity: 0.15,
-            blending: THREE.AdditiveBlending
+            opacity: 0.9,
+            blending: THREE.AdditiveBlending,
+            side: THREE.DoubleSide
         });
         
-        this.innerGlow = new THREE.Mesh(geometry, material);
+        this.innerGlow = new THREE.Mesh(dotGeometry, dotMaterial);
         this.group.add(this.innerGlow);
         
-        // Outer glow layers
-        for (let i = 1; i <= 3; i++) {
-            const glowGeometry = new THREE.SphereGeometry(3 + i * 2, 32, 32);
-            const glowMaterial = new THREE.MeshBasicMaterial({
+        // Add point light for actual glow effect
+        this.pointLight = new THREE.PointLight(color, 0.5, 100);
+        this.pointLight.position.set(0, 0, 0);
+        this.group.add(this.pointLight);
+        
+        // Add concentric glowing rings instead of solid spheres
+        for (let i = 1; i <= 4; i++) {
+            const ringRadius = 2 + i * 1.5;
+            const ringGeometry = new THREE.RingGeometry(ringRadius - 0.1, ringRadius + 0.1, 64);
+            const ringMaterial = new THREE.MeshBasicMaterial({
                 color: color,
                 transparent: true,
-                opacity: 0.05 / i,
+                opacity: 0.3 / i,
+                side: THREE.DoubleSide,
                 blending: THREE.AdditiveBlending
             });
             
-            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-            this.group.add(glow);
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            this.group.add(ring);
+            this.layers.push(ring);
         }
     }
     
@@ -780,17 +790,29 @@ export class SacredGeometryGroup {
         const ringCount = 3;
         
         for (let i = 0; i < ringCount; i++) {
-            const radius = 30 + i * 8;
-            const geometry = new THREE.RingGeometry(radius, radius + 0.1, 128);
-            const material = new THREE.MeshBasicMaterial({
+            const radius = 28 + i * 6;
+            // Use thin line rings instead of mesh rings
+            const points = [];
+            const segments = 128;
+            
+            for (let j = 0; j <= segments; j++) {
+                const angle = (j / segments) * Math.PI * 2;
+                points.push(new THREE.Vector3(
+                    Math.cos(angle) * radius,
+                    Math.sin(angle) * radius,
+                    0
+                ));
+            }
+            
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({
                 color: colors[i % colors.length],
                 transparent: true,
-                opacity: 0.2 - i * 0.05,
-                side: THREE.DoubleSide,
+                opacity: 0.25 - i * 0.05,
                 blending: THREE.AdditiveBlending
             });
             
-            const ring = new THREE.Mesh(geometry, material);
+            const ring = new THREE.Line(geometry, material);
             this.group.add(ring);
             this.outerRings.push(ring);
         }
@@ -798,21 +820,22 @@ export class SacredGeometryGroup {
     
     createEtherealParticles(colors) {
         const memberCount = Object.keys(this.data.members || {}).length;
-        const particleCount = 200 + memberCount * 100;
+        const particleCount = 150 + memberCount * 50;
         
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
         const colorArray = new Float32Array(particleCount * 3);
-        const sizes = new Float32Array(particleCount);
         
         for (let i = 0; i < particleCount; i++) {
-            // Distribute on disc with concentration near center
-            const r = Math.pow(Math.random(), 0.5) * 40;
+            // Distribute in a ring pattern (avoid center)
+            const minRadius = 8;
+            const maxRadius = 35;
+            const r = minRadius + Math.random() * (maxRadius - minRadius);
             const theta = Math.random() * Math.PI * 2;
             
             positions[i * 3] = Math.cos(theta) * r;
             positions[i * 3 + 1] = Math.sin(theta) * r;
-            positions[i * 3 + 2] = (Math.random() - 0.5) * 5;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 3;
             
             // Color from member intentions
             const colorHex = colors[i % colors.length];
@@ -820,19 +843,16 @@ export class SacredGeometryGroup {
             colorArray[i * 3] = color.r;
             colorArray[i * 3 + 1] = color.g;
             colorArray[i * 3 + 2] = color.b;
-            
-            sizes[i] = Math.random() * 0.5 + 0.2;
         }
         
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
-        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
         
         const material = new THREE.PointsMaterial({
-            size: 0.4,
+            size: 0.6,
             vertexColors: true,
             transparent: true,
-            opacity: 0.6,
+            opacity: 0.7,
             blending: THREE.AdditiveBlending,
             sizeAttenuation: true
         });
@@ -1072,6 +1092,12 @@ export class SacredGeometryGroup {
             this.innerGlow = null;
         }
         
+        if (this.pointLight) {
+            this.group.remove(this.pointLight);
+            this.pointLight.dispose();
+            this.pointLight = null;
+        }
+        
         // Recreate
         this.createSacredPattern();
     }
@@ -1104,10 +1130,19 @@ export class SacredGeometryGroup {
             ring.scale.setScalar(pulse);
         });
         
-        // Pulse inner glow
+        // Pulse inner glow and point light
         if (this.innerGlow) {
-            const glowPulse = 1 + Math.sin(elapsed * 0.5) * 0.1;
+            const glowPulse = 1 + Math.sin(elapsed * 0.5) * 0.2;
             this.innerGlow.scale.setScalar(glowPulse);
+            
+            // Also pulse the material opacity
+            const opacityPulse = 0.7 + Math.sin(elapsed * 0.5) * 0.2;
+            this.innerGlow.material.opacity = opacityPulse;
+        }
+        
+        if (this.pointLight) {
+            const lightPulse = 0.4 + Math.sin(elapsed * 0.5) * 0.2;
+            this.pointLight.intensity = lightPulse;
         }
         
         // Subtle opacity pulse on layers
@@ -1217,6 +1252,10 @@ export class SacredGeometryGroup {
         if (this.innerGlow) {
             this.innerGlow.geometry.dispose();
             this.innerGlow.material.dispose();
+        }
+        
+        if (this.pointLight) {
+            this.pointLight.dispose();
         }
     }
     
