@@ -106,8 +106,104 @@
         </div>
     </div>
 
-    <!-- Gyroscope Button (Mobile) -->
-    <button id="gyroscope-btn" class="gyroscope-btn hidden">🔄 Enable Gyroscope</button>
+    <!-- Settings Button -->
+    <button id="settings-btn" class="settings-btn hidden">
+        <span class="settings-icon">⚙️</span>
+    </button>
+
+    <!-- Settings Modal -->
+    <div id="settings-menu" class="modal-overlay hidden">
+        <div class="modal settings-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">⚙️ SETTINGS</h2>
+                <button class="close-btn" data-close="settings-menu">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Controls</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-name">Show Joystick</span>
+                            <span class="setting-desc">Virtual joystick for movement (mobile)</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-joystick" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-name">Enable Gyroscope</span>
+                            <span class="setting-desc">Tilt phone to move through space</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-gyroscope">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Display</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-name">Show Labels</span>
+                            <span class="setting-desc">Show nicknames above shapes</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-labels" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-name">Show Particles</span>
+                            <span class="setting-desc">Emotion particle effects</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-particles" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-name">Auto-Rotate Camera</span>
+                            <span class="setting-desc">Slowly rotate when idle</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-autorotate" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="settings-section">
+                    <h3 class="settings-section-title">Performance</h3>
+                    
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-name">Reduced Effects</span>
+                            <span class="setting-desc">Lower quality for better performance</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-lowquality">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Self Menu Modal -->
     <div id="self-menu" class="modal-overlay hidden">

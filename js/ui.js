@@ -16,14 +16,26 @@ export class UIManager {
         this.soulsCounter = document.getElementById('souls-counter');
         this.menuBtn = document.getElementById('menu-btn');
         this.returnBtn = document.getElementById('return-btn');
+        this.settingsBtn = document.getElementById('settings-btn');
         this.selfMenu = document.getElementById('self-menu');
         this.userMenu = document.getElementById('user-menu');
+        this.settingsMenu = document.getElementById('settings-menu');
         
         // Inputs
         this.nicknameInput = document.getElementById('nickname-input');
         this.noteInput = document.getElementById('note-input');
         this.selfNickname = document.getElementById('self-nickname');
         this.selfNote = document.getElementById('self-note');
+        
+        // Settings
+        this.settings = {
+            showJoystick: true,
+            enableGyroscope: false,
+            showLabels: true,
+            showParticles: true,
+            autoRotate: true,
+            lowQuality: false
+        };
         
         // State
         this.selfData = null;
@@ -61,14 +73,24 @@ export class UIManager {
             });
         });
         
+        // Settings button
+        if (this.settingsBtn) {
+            this.settingsBtn.addEventListener('click', () => this.openSettingsMenu());
+        }
+        
         // Click outside modal to close
-        [this.selfMenu, this.userMenu].forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    this.closeModal(modal.id);
-                }
-            });
+        [this.selfMenu, this.userMenu, this.settingsMenu].forEach(modal => {
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        this.closeModal(modal.id);
+                    }
+                });
+            }
         });
+        
+        // Settings toggles
+        this.bindSettingsEvents();
         
         // Intention buttons
         document.querySelectorAll('.intention-btn').forEach(btn => {
@@ -140,6 +162,11 @@ export class UIManager {
         this.menuBtn.classList.remove('hidden');
         this.returnBtn.classList.remove('hidden');
         
+        // Show settings button
+        if (this.settingsBtn) {
+            this.settingsBtn.classList.remove('hidden');
+        }
+        
         // Show controls hint (only on desktop)
         const controlsHint = document.getElementById('controls-hint');
         if (controlsHint && !this.isMobile()) {
@@ -178,6 +205,16 @@ export class UIManager {
             duration: 0.5,
             delay: 0.5
         });
+        
+        if (this.settingsBtn) {
+            gsap.from(this.settingsBtn, {
+                scale: 0,
+                opacity: 0,
+                duration: 0.5,
+                delay: 0.5,
+                ease: 'back.out(1.7)'
+            });
+        }
         
         if (controlsHint && !this.isMobile()) {
             gsap.from(controlsHint, {
@@ -450,9 +487,142 @@ export class UIManager {
     closeAllModals() {
         showElement(this.selfMenu, false);
         showElement(this.userMenu, false);
+        if (this.settingsMenu) {
+            showElement(this.settingsMenu, false);
+        }
         this.stopConnectionTimeUpdates();
         this.selectedUserId = null;
         this.selectedUserData = null;
+    }
+    
+    // ========================
+    // Settings Management
+    // ========================
+    
+    bindSettingsEvents() {
+        // Joystick toggle
+        const joystickToggle = document.getElementById('setting-joystick');
+        if (joystickToggle) {
+            joystickToggle.addEventListener('change', (e) => {
+                this.settings.showJoystick = e.target.checked;
+                this.applyJoystickSetting();
+            });
+        }
+        
+        // Gyroscope toggle
+        const gyroToggle = document.getElementById('setting-gyroscope');
+        if (gyroToggle) {
+            gyroToggle.addEventListener('change', async (e) => {
+                this.settings.enableGyroscope = e.target.checked;
+                await this.applyGyroscopeSetting();
+            });
+        }
+        
+        // Labels toggle
+        const labelsToggle = document.getElementById('setting-labels');
+        if (labelsToggle) {
+            labelsToggle.addEventListener('change', (e) => {
+                this.settings.showLabels = e.target.checked;
+                this.applyLabelsSetting();
+            });
+        }
+        
+        // Particles toggle
+        const particlesToggle = document.getElementById('setting-particles');
+        if (particlesToggle) {
+            particlesToggle.addEventListener('change', (e) => {
+                this.settings.showParticles = e.target.checked;
+                this.applyParticlesSetting();
+            });
+        }
+        
+        // Auto-rotate toggle
+        const autoRotateToggle = document.getElementById('setting-autorotate');
+        if (autoRotateToggle) {
+            autoRotateToggle.addEventListener('change', (e) => {
+                this.settings.autoRotate = e.target.checked;
+                this.applyAutoRotateSetting();
+            });
+        }
+        
+        // Low quality toggle
+        const lowQualityToggle = document.getElementById('setting-lowquality');
+        if (lowQualityToggle) {
+            lowQualityToggle.addEventListener('change', (e) => {
+                this.settings.lowQuality = e.target.checked;
+                // Could implement quality reduction here
+            });
+        }
+    }
+    
+    openSettingsMenu() {
+        if (!this.settingsMenu) return;
+        
+        // Sync toggle states with current settings
+        const joystickToggle = document.getElementById('setting-joystick');
+        const gyroToggle = document.getElementById('setting-gyroscope');
+        const labelsToggle = document.getElementById('setting-labels');
+        const particlesToggle = document.getElementById('setting-particles');
+        const autoRotateToggle = document.getElementById('setting-autorotate');
+        const lowQualityToggle = document.getElementById('setting-lowquality');
+        
+        if (joystickToggle) joystickToggle.checked = this.settings.showJoystick;
+        if (gyroToggle) gyroToggle.checked = this.settings.enableGyroscope;
+        if (labelsToggle) labelsToggle.checked = this.settings.showLabels;
+        if (particlesToggle) particlesToggle.checked = this.settings.showParticles;
+        if (autoRotateToggle) autoRotateToggle.checked = this.settings.autoRotate;
+        if (lowQualityToggle) lowQualityToggle.checked = this.settings.lowQuality;
+        
+        showElement(this.settingsMenu, true);
+    }
+    
+    applyJoystickSetting() {
+        const joystick = document.getElementById('mobile-joystick');
+        if (joystick) {
+            if (this.settings.showJoystick && this.isMobile()) {
+                joystick.classList.remove('hidden');
+                joystick.classList.add('visible');
+            } else {
+                joystick.classList.add('hidden');
+                joystick.classList.remove('visible');
+            }
+        }
+    }
+    
+    async applyGyroscopeSetting() {
+        if (!this.scene) return;
+        
+        if (this.settings.enableGyroscope) {
+            await this.scene.enableGyroscope();
+        } else {
+            this.scene.disableGyroscope();
+        }
+    }
+    
+    applyLabelsSetting() {
+        if (!this.scene) return;
+        
+        this.scene.users.forEach(userShape => {
+            if (userShape.label) {
+                userShape.label.visible = this.settings.showLabels;
+            }
+        });
+    }
+    
+    applyParticlesSetting() {
+        if (!this.scene) return;
+        
+        this.scene.users.forEach(userShape => {
+            if (userShape.emotionEffect && userShape.emotionEffect.particles) {
+                userShape.emotionEffect.particles.visible = this.settings.showParticles;
+            }
+        });
+    }
+    
+    applyAutoRotateSetting() {
+        if (!this.scene) return;
+        
+        this.scene.controls.autoRotate = this.settings.autoRotate;
     }
     
     // ========================

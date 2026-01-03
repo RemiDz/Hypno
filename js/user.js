@@ -111,8 +111,11 @@ export class UserShape {
         });
         
         this.label = new THREE.Sprite(spriteMaterial);
-        this.label.scale.set(canvas.width / 40, canvas.height / 40, 1);
-        this.label.position.y = 8;  // Move higher above the shape
+        this.label.scale.set(canvas.width / 50, canvas.height / 50, 1);
+        
+        // Calculate label height based on shape bounding box
+        this.updateLabelPosition();
+        
         this.label.renderOrder = 999;  // Ensure it renders on top
         
         this.group.add(this.label);
@@ -120,6 +123,21 @@ export class UserShape {
         // Store for disposal
         this.labelTexture = texture;
         this.labelMaterial = spriteMaterial;
+    }
+    
+    updateLabelPosition() {
+        if (!this.label || !this.mesh) return;
+        
+        // Get the bounding box of the mesh
+        if (!this.mesh.geometry.boundingBox) {
+            this.mesh.geometry.computeBoundingBox();
+        }
+        
+        const box = this.mesh.geometry.boundingBox;
+        const shapeHeight = (box.max.y - box.min.y) * this.baseScale;
+        
+        // Position label just above the shape (consistent 5 units above top)
+        this.label.position.y = shapeHeight / 2 + 5;
     }
     
     updateLabel() {
