@@ -439,11 +439,11 @@ html, body {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 150;
+    z-index: 500;
     width: 48px;
     height: 48px;
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(20, 20, 40, 0.85);
+    border: 2px solid rgba(139, 92, 246, 0.5);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -452,11 +452,14 @@ html, body {
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     transition: all 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
-.settings-btn:hover {
-    background: rgba(139, 92, 246, 0.3);
-    border-color: rgba(139, 92, 246, 0.8);
+.settings-btn:hover,
+.settings-btn:active {
+    background: rgba(139, 92, 246, 0.4);
+    border-color: rgba(139, 92, 246, 0.9);
     transform: scale(1.1);
 }
 
@@ -464,25 +467,30 @@ html, body {
     display: none !important;
 }
 
-.settings-icon {
-    font-size: 24px;
+.settings-icon-svg {
+    width: 22px;
+    height: 22px;
+    color: rgba(255, 255, 255, 0.9);
     transition: transform 0.5s ease;
 }
 
-.settings-btn:hover .settings-icon {
+.settings-btn:hover .settings-icon-svg,
+.settings-btn:active .settings-icon-svg {
     transform: rotate(90deg);
+    color: #fff;
 }
 
 @media (max-width: 768px) {
     .settings-btn {
-        top: 16px;
-        right: 16px;
-        width: 42px;
-        height: 42px;
+        top: 12px;
+        right: 12px;
+        width: 44px;
+        height: 44px;
     }
     
-    .settings-icon {
-        font-size: 20px;
+    .settings-icon-svg {
+        width: 20px;
+        height: 20px;
     }
 }
 
