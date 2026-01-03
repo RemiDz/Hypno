@@ -68,27 +68,74 @@ export class UserShape {
         const intentionData = INTENTIONS[intention];
         const color = intentionData ? intentionData.colorHex : 0xFFFFFF;
         
+        // Self shapes are larger and more prominent
+        const scaleMult = this.isSelf ? 1.3 : 1.0;
+        const selfScale = this.baseScale * scaleMult;
+        
         // Main mesh
         const geometry = createShapeGeometry(intention);
-        const material = createShapeMaterial(color, this.isSelf ? 0.5 : 0.3);
+        const material = createShapeMaterial(color, this.isSelf ? 0.7 : 0.3);
         
         this.mesh = new THREE.Mesh(geometry, material);
-        this.mesh.scale.setScalar(this.baseScale);
+        this.mesh.scale.setScalar(selfScale);
         this.group.add(this.mesh);
         
-        // Glow mesh
+        // Glow mesh - brighter for self
         const glowGeometry = geometry.clone();
         const glowMaterial = createGlowMaterial(color);
+        glowMaterial.opacity = this.isSelf ? 0.35 : 0.15;
         
         this.glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
-        this.glowMesh.scale.setScalar(this.baseScale * 1.3);
+        this.glowMesh.scale.setScalar(selfScale * 1.4);
         this.group.add(this.glowMesh);
+        
+        // Add distinctive outer ring for self
+        if (this.isSelf) {
+            this.createSelfIndicator(color);
+        }
         
         // Store references for disposal
         this.geometry = geometry;
         this.material = material;
         this.glowGeometry = glowGeometry;
         this.glowMaterial = glowMaterial;
+        this.selfScale = selfScale;
+    }
+    
+    createSelfIndicator(color) {
+        // Outer rotating ring to clearly identify self
+        const ringGeometry = new THREE.RingGeometry(this.baseScale * 2.2, this.baseScale * 2.5, 64);
+        const ringMaterial = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending
+        });
+        
+        this.selfRing = new THREE.Mesh(ringGeometry, ringMaterial);
+        this.selfRing.rotation.x = Math.PI / 2; // Horizontal ring
+        this.group.add(this.selfRing);
+        
+        // Second ring at different angle
+        const ring2Geometry = new THREE.RingGeometry(this.baseScale * 2.0, this.baseScale * 2.2, 64);
+        const ring2Material = new THREE.MeshBasicMaterial({
+            color: 0xFFFFFF,
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending
+        });
+        
+        this.selfRing2 = new THREE.Mesh(ring2Geometry, ring2Material);
+        this.selfRing2.rotation.x = Math.PI / 3; // Angled ring
+        this.group.add(this.selfRing2);
+        
+        // Store for disposal
+        this.selfRingGeometry = ringGeometry;
+        this.selfRingMaterial = ringMaterial;
+        this.selfRing2Geometry = ring2Geometry;
+        this.selfRing2Material = ring2Material;
     }
     
     createHitbox() {
@@ -333,22 +380,41 @@ export class UserShape {
     animate(delta, elapsed) {
         if (this.isDisposing) return;
         
-        // Pulse animation (breathing)
+        // Pulse animation (breathing) - more pronounced for self
         const pulseSpeed = EMOTIONS[this.data.emotion]?.pulseSpeed || 1.0;
-        const pulse = 1 + Math.sin(elapsed * pulseSpeed + this.pulsePhase) * 0.05;
+        const pulseAmount = this.isSelf ? 0.1 : 0.05;
+        const pulse = 1 + Math.sin(elapsed * pulseSpeed + this.pulsePhase) * pulseAmount;
+        
+        const scale = this.selfScale || this.baseScale;
         
         if (this.mesh) {
-            this.mesh.scale.setScalar(this.baseScale * pulse);
+            this.mesh.scale.setScalar(scale * pulse);
         }
         
         if (this.glowMesh) {
-            this.glowMesh.scale.setScalar(this.baseScale * 1.3 * pulse);
-            this.glowMesh.material.opacity = 0.1 + Math.sin(elapsed * pulseSpeed + this.pulsePhase) * 0.05;
+            const glowScale = this.isSelf ? 1.4 : 1.3;
+            const baseOpacity = this.isSelf ? 0.25 : 0.1;
+            const opacityPulse = this.isSelf ? 0.1 : 0.05;
+            
+            this.glowMesh.scale.setScalar(scale * glowScale * pulse);
+            this.glowMesh.material.opacity = baseOpacity + Math.sin(elapsed * pulseSpeed + this.pulsePhase) * opacityPulse;
         }
         
         // Rotate shape slowly
         if (this.mesh) {
             this.mesh.rotation.y += delta * 0.2;
+        }
+        
+        // Animate self indicator rings
+        if (this.isSelf) {
+            if (this.selfRing) {
+                this.selfRing.rotation.z += delta * 0.5; // Slow rotation
+                this.selfRing.material.opacity = 0.4 + Math.sin(elapsed * 1.5) * 0.2;
+            }
+            if (this.selfRing2) {
+                this.selfRing2.rotation.z -= delta * 0.3; // Counter rotation
+                this.selfRing2.rotation.y += delta * 0.2;
+            }
         }
         
         // Animate emotion effect
@@ -428,6 +494,20 @@ export class UserShape {
         }
         if (this.hitboxMaterial) {
             this.hitboxMaterial.dispose();
+        }
+        
+        // Dispose self indicator rings
+        if (this.selfRingGeometry) {
+            this.selfRingGeometry.dispose();
+        }
+        if (this.selfRingMaterial) {
+            this.selfRingMaterial.dispose();
+        }
+        if (this.selfRing2Geometry) {
+            this.selfRing2Geometry.dispose();
+        }
+        if (this.selfRing2Material) {
+            this.selfRing2Material.dispose();
         }
         
         // Dispose label
