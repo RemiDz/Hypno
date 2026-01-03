@@ -67,6 +67,9 @@ class HypnoApp {
             this.scene.onSelfClicked = this.onSelfClicked.bind(this);
             this.scene.onSacredGeometryClicked = this.onSacredGeometryClicked.bind(this);
             
+            // Setup UI callbacks
+            this.ui.onUserNavigate = this.navigateToUser.bind(this);
+            
             // Throttled position update (every 100ms)
             this.scene.onPositionChanged = throttle((newPos) => {
                 this.firebase.updatePosition(newPos.x, newPos.y, newPos.z);
@@ -112,6 +115,7 @@ class HypnoApp {
         // Active user count
         this.firebase.onActiveUserCountChanged = (count) => {
             this.ui.updateSoulsCounter(count);
+            this.refreshActiveUsersList();
         };
         
         // Connection state
@@ -570,8 +574,9 @@ class HypnoApp {
         this.users.set(userId, userData);
         this.scene.addUser(userId, userData, false);
         
-        // Update connections
+        // Update connections and active users list
         this.updateConnections();
+        this.refreshActiveUsersList();
     }
     
     updateUser(userId, userData) {
@@ -580,14 +585,33 @@ class HypnoApp {
         
         // Update connections (resonance might have changed)
         this.updateConnections();
+        this.refreshActiveUsersList();
     }
     
     removeUser(userId) {
         this.users.delete(userId);
         this.scene.removeUser(userId);
         
-        // Update connections
+        // Update connections and active users list
         this.updateConnections();
+        this.refreshActiveUsersList();
+    }
+    
+    refreshActiveUsersList() {
+        // Build full users map including self
+        const allUsers = new Map();
+        
+        this.users.forEach((userData, userId) => {
+            allUsers.set(userId, userData);
+        });
+        
+        // Add self
+        if (this.selfId && this.selfData) {
+            allUsers.set(this.selfId, this.selfData);
+        }
+        
+        // Update UI
+        this.ui.updateActiveUsersList(allUsers, this.selfId);
     }
     
     updateConnections() {
@@ -628,6 +652,24 @@ class HypnoApp {
     
     onSelfClicked() {
         this.ui.openSelfMenu();
+    }
+    
+    navigateToUser(userId) {
+        // Find the user's position and animate camera to it
+        let userShape;
+        
+        if (userId === this.selfId) {
+            userShape = this.scene.users.get(this.selfId);
+        } else {
+            userShape = this.scene.users.get(userId);
+        }
+        
+        if (userShape) {
+            const pos = userShape.getPosition();
+            
+            // Animate camera to look at this user
+            this.scene.animateCameraTo(pos.x, pos.y, pos.z, 60);
+        }
     }
     
     async onSacredGeometryClicked(geometryId) {

@@ -27,6 +27,8 @@ export class UIManager {
         this.selfMenu = document.getElementById('self-menu');
         this.userMenu = document.getElementById('user-menu');
         this.settingsMenu = document.getElementById('settings-menu');
+        this.activeUsersPanel = document.getElementById('active-users-panel');
+        this.activeUsersList = document.getElementById('active-users-list');
         
         // Inputs
         this.nicknameInput = document.getElementById('nickname-input');
@@ -248,6 +250,9 @@ export class UIManager {
             });
         }
         
+        // Show active users panel
+        this.showActiveUsersPanel();
+        
         if (controlsHint && !this.isMobile()) {
             gsap.from(controlsHint, {
                 y: 20,
@@ -318,6 +323,100 @@ export class UIManager {
                     });
                 }
             });
+        }
+    }
+    
+    // ========================
+    // Active Users List
+    // ========================
+    
+    updateActiveUsersList(usersMap, selfId) {
+        if (!this.activeUsersList || !this.activeUsersPanel) return;
+        
+        // Clear existing list
+        this.activeUsersList.innerHTML = '';
+        
+        // Convert to array and sort (self first, then alphabetically)
+        const usersArray = [];
+        usersMap.forEach((userData, oderId) => {
+            usersArray.push({ id: oderId, data: userData, isSelf: oderId === selfId });
+        });
+        
+        // Sort: self first, then by nickname
+        usersArray.sort((a, b) => {
+            if (a.isSelf) return -1;
+            if (b.isSelf) return 1;
+            const nameA = (a.data.nickname || 'Anonymous').toLowerCase();
+            const nameB = (b.data.nickname || 'Anonymous').toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+        
+        // Create list items
+        usersArray.forEach(user => {
+            const li = document.createElement('li');
+            li.className = 'active-user-item' + (user.isSelf ? ' is-self' : '');
+            li.dataset.userId = user.id;
+            
+            // Color dot based on intention
+            const intentionColors = {
+                observer: '#E2E8F0',
+                peace: '#A78BFA',
+                love: '#F472B6',
+                clarity: '#60A5FA',
+                creativity: '#FBBF24',
+                transcendence: '#34D399',
+                transformation: '#F87171',
+                healing: '#22D3EE',
+                wisdom: '#C084FC',
+                unity: '#FCD34D'
+            };
+            const dotColor = intentionColors[user.data.intention] || '#E2E8F0';
+            
+            const dot = document.createElement('span');
+            dot.className = 'active-user-dot';
+            dot.style.backgroundColor = dotColor;
+            
+            const name = document.createElement('span');
+            name.className = 'active-user-name';
+            name.textContent = user.isSelf 
+                ? `${user.data.nickname || 'Anonymous'} (You)` 
+                : (user.data.nickname || 'Anonymous');
+            
+            li.appendChild(dot);
+            li.appendChild(name);
+            
+            // Click handler - navigate to user
+            li.addEventListener('click', () => {
+                if (this.onUserNavigate) {
+                    this.onUserNavigate(user.id);
+                }
+            });
+            
+            this.activeUsersList.appendChild(li);
+        });
+        
+        // Show panel if hidden and we have users
+        if (usersArray.length > 0 && !this.activeUsersPanel.classList.contains('visible')) {
+            this.activeUsersPanel.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                this.activeUsersPanel.classList.add('visible');
+            });
+        }
+    }
+    
+    showActiveUsersPanel() {
+        if (this.activeUsersPanel) {
+            this.activeUsersPanel.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                this.activeUsersPanel.classList.add('visible');
+            });
+        }
+    }
+    
+    hideActiveUsersPanel() {
+        if (this.activeUsersPanel) {
+            this.activeUsersPanel.classList.remove('visible');
+            this.activeUsersPanel.classList.add('hidden');
         }
     }
     

@@ -20,9 +20,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet">
     
     <!-- Styles with cache-busting -->
-    <link rel="stylesheet" href="css/styles.css?v=20260103b">
-    <link rel="stylesheet" href="css/menu.css?v=20260103b">
-    <link rel="stylesheet" href="css/animations.css?v=20260103b">
+    <link rel="stylesheet" href="css/styles.css?v=20260103c">
+    <link rel="stylesheet" href="css/menu.css?v=20260103c">
+    <link rel="stylesheet" href="css/animations.css?v=20260103c">
     
     <!-- Critical inline styles for mobile welcome modal -->
     <style>
@@ -113,15 +113,120 @@
             resize: none !important;
         }
         
-        /* Settings button always visible */
-        .settings-btn:not(.hidden) {
+        /* Settings button - FORCE visible when not hidden */
+        #settings-btn:not(.hidden) {
             display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
             position: fixed !important;
             top: 14px !important;
             right: 14px !important;
             z-index: 600 !important;
-            background: rgba(20, 20, 40, 0.9) !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            width: 48px !important;
+            height: 48px !important;
+            background: rgba(20, 20, 40, 0.95) !important;
+            border: 1px solid rgba(255, 255, 255, 0.25) !important;
+            border-radius: 50% !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+        }
+        
+        #settings-btn .settings-icon-svg {
+            color: rgba(255, 255, 255, 0.85) !important;
+        }
+        
+        /* Active Users List */
+        .active-users-panel {
+            position: fixed;
+            top: 70px;
+            left: 16px;
+            z-index: 200;
+            max-width: 180px;
+            max-height: 40vh;
+            overflow-y: auto;
+            background: rgba(8, 8, 18, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 10px 0;
+            opacity: 0;
+            transform: translateX(-20px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        
+        .active-users-panel.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .active-users-panel.hidden {
+            display: none !important;
+        }
+        
+        .active-users-header {
+            padding: 4px 14px 10px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.5);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        
+        .active-users-list {
+            list-style: none;
+            margin: 0;
+            padding: 6px 0;
+        }
+        
+        .active-user-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .active-user-item:hover {
+            background: rgba(139, 92, 246, 0.15);
+        }
+        
+        .active-user-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .active-user-name {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .active-user-item.is-self .active-user-name {
+            color: #8B5CF6;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 768px) {
+            .active-users-panel {
+                top: 60px;
+                left: 10px;
+                max-width: 150px;
+                max-height: 30vh;
+            }
+            .active-user-item {
+                padding: 6px 12px;
+            }
+            .active-user-name {
+                font-size: 0.7rem;
+            }
         }
     </style>
 </head>
@@ -167,6 +272,14 @@
 
     <!-- Souls Counter -->
     <div id="souls-counter" class="souls-counter">✧ 0 souls connected ✧</div>
+    
+    <!-- Active Users Panel -->
+    <div id="active-users-panel" class="active-users-panel hidden">
+        <div class="active-users-header">Active Souls</div>
+        <ul id="active-users-list" class="active-users-list">
+            <!-- Users will be populated here dynamically -->
+        </ul>
+    </div>
 
     <!-- Menu Button -->
     <button id="menu-btn" class="menu-btn hidden">

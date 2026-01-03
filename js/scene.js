@@ -906,6 +906,28 @@ export class CosmicScene {
         }
     }
     
+    animateCameraTo(x, y, z, distance = 60) {
+        // Animate camera to look at a specific position with optional zoom
+        gsap.to(this.controls.target, {
+            x: x,
+            y: y,
+            z: z,
+            duration: 1.2,
+            ease: 'power2.inOut',
+            onUpdate: () => this.updateCameraFromControls()
+        });
+        
+        // Also adjust distance/zoom
+        if (distance && this.controls.spherical) {
+            gsap.to(this.controls.spherical, {
+                radius: distance,
+                duration: 1.2,
+                ease: 'power2.inOut',
+                onUpdate: () => this.updateCameraFromControls()
+            });
+        }
+    }
+    
     // Connection management
     addConnection(fromId, toId) {
         const { ConnectionThread } = window.HypnoClasses;
