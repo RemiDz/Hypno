@@ -51,6 +51,9 @@ class HypnoApp {
             // Initialize connection manager
             this.connectionManager = new ConnectionManager(this.scene.scene, this.scene.users);
             
+            // Give scene a reference to connection manager for animation
+            this.scene.connectionManager = this.connectionManager;
+            
             // Setup scene callbacks
             this.scene.onUserClicked = this.onUserClicked.bind(this);
             this.scene.onSelfClicked = this.onSelfClicked.bind(this);

@@ -16,6 +16,7 @@ export class CosmicScene {
         
         this.users = new Map();           // userId -> UserShape
         this.connections = new Map();     // connectionId -> ConnectionThread
+        this.connectionManager = null;    // Set by main.js
         
         this.selfId = null;
         this.selfShape = null;
@@ -755,7 +756,12 @@ export class CosmicScene {
             userShape.animate(delta, elapsed);
         });
         
-        // Update all connections
+        // Update all connections (from connection manager)
+        if (this.connectionManager) {
+            this.connectionManager.animate(delta, elapsed);
+        }
+        
+        // Also update any scene-level connections
         this.connections.forEach(connection => {
             connection.animate(delta, elapsed);
         });

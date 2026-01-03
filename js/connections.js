@@ -159,22 +159,29 @@ export class ConnectionThread {
     }
     
     updateCurve() {
-        const startPos = this.fromUser.getPosition();
-        const endPos = this.toUser.getPosition();
+        // Get CURRENT positions from user groups
+        const startPos = this.fromUser.group.position.clone();
+        const endPos = this.toUser.group.position.clone();
         
         // Calculate midpoint with offset for curve
         const midpoint = new THREE.Vector3().lerpVectors(startPos, endPos, 0.5);
         const distance = startPos.distanceTo(endPos);
-        midpoint.y += distance * 0.2; // Curve upward
+        midpoint.y += distance * 0.15; // Curve upward slightly
         
         // Create curve
         const curve = new THREE.QuadraticBezierCurve3(startPos, midpoint, endPos);
         const points = curve.getPoints(50);
         
-        if (this.line) {
-            // Update existing geometry
-            this.line.geometry.setFromPoints(points);
-            this.line.geometry.attributes.position.needsUpdate = true;
+        if (this.line && this.line.geometry) {
+            // Dispose old geometry and create new one (more reliable than updating)
+            this.line.geometry.dispose();
+            this.line.geometry = new THREE.BufferGeometry().setFromPoints(points);
+            
+            // Also update glow line
+            if (this.glowLine && this.glowLine.geometry) {
+                this.glowLine.geometry.dispose();
+                this.glowLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
+            }
         } else {
             // Create new line
             const geometry = new THREE.BufferGeometry().setFromPoints(points);
