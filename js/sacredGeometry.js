@@ -74,9 +74,8 @@ export class SacredGeometryGroup {
             );
         }
         
-        // Store geometry ID for click detection
-        this.group.userData.sacredGeometryId = this.id;
-        this.group.userData.isSacredGeometry = true;
+        // Note: sacredGeometryId and isSacredGeometry are set only on the hitbox
+        // to ensure only center clicks are detected (not clicks on visual elements)
         
         // Initialize member list for orbital animation
         this.updateMemberList();
@@ -96,8 +95,8 @@ export class SacredGeometryGroup {
     }
     
     createHitbox() {
-        // Small sphere at center for click detection (only center is clickable)
-        const radius = 8; // Small fixed radius for center-only click
+        // Very small sphere at center for click detection (only very center is clickable)
+        const radius = 5; // Very small radius - only the very center is clickable
         
         const geometry = new THREE.SphereGeometry(radius, 16, 16);
         const material = new THREE.MeshBasicMaterial({

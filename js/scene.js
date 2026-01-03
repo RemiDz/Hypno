@@ -759,11 +759,11 @@ export class CosmicScene {
             }
         });
         
-        // Add sacred geometries
+        // Add sacred geometry hitboxes (only the center hitbox is clickable)
         if (this.sacredGeometryManager) {
             this.sacredGeometryManager.geometries.forEach((geometry, geometryId) => {
-                if (geometry.group) {
-                    clickableObjects.push(geometry.group);
+                if (geometry.hitbox) {
+                    clickableObjects.push(geometry.hitbox);
                 }
             });
         }
@@ -778,13 +778,16 @@ export class CosmicScene {
             for (const intersect of intersects) {
                 let object = intersect.object;
                 
-                // Walk up the parent chain to find the root with userData
+                // Check direct object first for sacred geometry hitbox
+                if (object.userData.isSacredGeometry && !sacredGeometryHit) {
+                    sacredGeometryHit = { geometryId: object.userData.sacredGeometryId, distance: intersect.distance };
+                }
+                
+                // Walk up the parent chain to find user shapes
                 while (object) {
                     if (object.userData.userId && !userHit) {
                         userHit = { userId: object.userData.userId, distance: intersect.distance };
-                    }
-                    if (object.userData.isSacredGeometry && !sacredGeometryHit) {
-                        sacredGeometryHit = { geometryId: object.userData.sacredGeometryId, distance: intersect.distance };
+                        break;
                     }
                     object = object.parent;
                 }
