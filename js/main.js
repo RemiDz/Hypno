@@ -521,6 +521,9 @@ class HypnoApp {
             const selfShape = this.scene.addUser(this.selfId, this.selfData, true);
             this.users.set(this.selfId, this.selfData);
             
+            // Set selfId in UI for direct scene updates
+            this.ui.setSelfId(this.selfId);
+            
             // Initialize sacred geometry system
             await this.initSacredGeometry();
             

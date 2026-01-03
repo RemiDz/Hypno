@@ -533,6 +533,11 @@ export class UIManager {
         this.updateIntentionButtons(intention);
         this.updateCurrentSelectionText();
         this.persistProfile(); // Save to localStorage
+        
+        // Immediately update the scene for instant visual feedback
+        if (this.scene && this.selfId) {
+            this.scene.updateUser(this.selfId, { intention });
+        }
     }
     
     selectEmotion(emotion) {
@@ -542,6 +547,11 @@ export class UIManager {
         this.updateEmotionButtons(emotion);
         this.updateCurrentSelectionText();
         this.persistProfile(); // Save to localStorage
+        
+        // Immediately update the scene for instant visual feedback
+        if (this.scene && this.selfId) {
+            this.scene.updateUser(this.selfId, { emotion });
+        }
     }
     
     startConnectionTimeUpdates() {
@@ -987,5 +997,9 @@ export class UIManager {
     
     setCosmicScene(scene) {
         this.scene = scene;
+    }
+    
+    setSelfId(selfId) {
+        this.selfId = selfId;
     }
 }
