@@ -467,6 +467,18 @@ export class UIManager {
         // Check resonance status
         this.updateResonanceStatus();
         
+        // Hide "Create Sacred Geometry" section if user is already in a geometry
+        const sgBtn = document.getElementById('sacred-geometry-btn');
+        const sgDesc = document.querySelector('.sg-description');
+        const isInGeometry = this.selfData && this.selfData.sacredGeometryId;
+        
+        if (sgBtn) {
+            sgBtn.style.display = isInGeometry ? 'none' : '';
+        }
+        if (sgDesc) {
+            sgDesc.style.display = isInGeometry ? 'none' : '';
+        }
+        
         // Show modal
         showElement(this.userMenu, true);
         
