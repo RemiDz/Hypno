@@ -2,8 +2,15 @@
    HYPNO - UI Management
    ============================================ */
 
-import { INTENTIONS, EMOTIONS } from './config.js';
-import { formatConnectionTime, showElement, pluralize } from './utils.js';
+import { INTENTIONS, EMOTIONS, DEFAULT_USER } from './config.js';
+import { 
+    formatConnectionTime, 
+    showElement, 
+    pluralize, 
+    loadFromLocal, 
+    saveToLocal,
+    clearLocalKeys
+} from './utils.js';
 
 export class UIManager {
     constructor(firebaseSync, cosmicScene) {
@@ -28,13 +35,18 @@ export class UIManager {
         this.selfNote = document.getElementById('self-note');
         
         // Settings
-        this.settings = {
+        this.defaultSettings = {
             showJoystick: true,
             enableGyroscope: false,
             showLabels: true,
             showParticles: true,
             autoRotate: true,
             lowQuality: false
+        };
+        this.settings = { ...this.defaultSettings };
+        this.storageKeys = {
+            profile: 'hypno_profile',
+            settings: 'hypno_settings'
         };
         
         // State
@@ -43,6 +55,10 @@ export class UIManager {
         this.selectedUserData = null;
         this.connectionTimeInterval = null;
         
+        this.loadSavedSettings();
+        this.loadSavedProfile();
+        this.applySettingsAfterLoad();
+        this.syncSettingsToggles();
         this.init();
     }
     
@@ -54,6 +70,8 @@ export class UIManager {
         // Welcome modal - Enter button
         const enterBtn = document.getElementById('enter-btn');
         enterBtn.addEventListener('click', () => this.onEnterClick());
+        this.nicknameInput.addEventListener('input', () => this.persistProfile());
+        this.noteInput.addEventListener('input', () => this.persistProfile());
         
         // Menu button
         this.menuBtn.addEventListener('click', () => this.openSelfMenu());
@@ -75,7 +93,12 @@ export class UIManager {
         
         // Settings button
         if (this.settingsBtn) {
-            this.settingsBtn.addEventListener('click', () => this.openSettingsMenu());
+            const openSettings = (e) => {
+                e.preventDefault();
+                this.openSettingsMenu();
+            };
+            this.settingsBtn.addEventListener('click', openSettings);
+            this.settingsBtn.addEventListener('touchend', openSettings);
         }
         
         // Click outside modal to close
@@ -112,11 +135,13 @@ export class UIManager {
         this.selfNickname.addEventListener('blur', () => {
             const nickname = this.selfNickname.value.trim() || 'Anonymous Wanderer';
             this.firebase.updateNickname(nickname);
+            this.persistProfile();
         });
         
         this.selfNote.addEventListener('blur', () => {
             const note = this.selfNote.value.trim();
             this.firebase.updateNote(note);
+            this.persistProfile();
         });
         
         // Resonate button
@@ -147,6 +172,7 @@ export class UIManager {
     async onEnterClick() {
         const nickname = this.nicknameInput.value.trim() || 'Anonymous Wanderer';
         const note = this.noteInput.value.trim();
+        this.persistProfile();
         
         // Hide welcome, show main UI
         showElement(this.welcomeModal, false);
@@ -228,16 +254,21 @@ export class UIManager {
         // Show mobile joystick ONLY on mobile devices
         const mobileJoystick = document.getElementById('mobile-joystick');
         if (mobileJoystick && this.isMobile()) {
-            mobileJoystick.classList.remove('hidden');
-            mobileJoystick.classList.add('visible');
-            
-            gsap.from(mobileJoystick, {
-                scale: 0,
-                opacity: 0,
-                duration: 0.5,
-                delay: 0.7,
-                ease: 'back.out(1.7)'
-            });
+            if (this.settings.showJoystick) {
+                mobileJoystick.classList.remove('hidden');
+                mobileJoystick.classList.add('visible');
+                
+                gsap.from(mobileJoystick, {
+                    scale: 0,
+                    opacity: 0,
+                    duration: 0.5,
+                    delay: 0.7,
+                    ease: 'back.out(1.7)'
+                });
+            } else {
+                mobileJoystick.classList.add('hidden');
+                mobileJoystick.classList.remove('visible');
+            }
         }
         
         // Show gyroscope button ONLY on mobile devices
@@ -337,14 +368,16 @@ export class UIManager {
     updateCurrentSelectionText() {
         if (!this.selfData) return;
         
-        const intention = INTENTIONS[this.selfData.intention];
-        const emotion = EMOTIONS[this.selfData.emotion];
+        const intentionKey = this.selfData.intention || 'observer';
+        const emotionKey = this.selfData.emotion || 'neutral';
+        const intention = INTENTIONS[intentionKey] || INTENTIONS.observer;
+        const emotion = EMOTIONS[emotionKey] || EMOTIONS.neutral;
         
         document.getElementById('current-intention').textContent = 
-            `Currently: ${intention.icon} ${this.selfData.intention.charAt(0).toUpperCase() + this.selfData.intention.slice(1)} (${intention.shape.charAt(0).toUpperCase() + intention.shape.slice(1)} shape)`;
+            `Currently: ${intention.icon} ${intentionKey.charAt(0).toUpperCase() + intentionKey.slice(1)} (${intention.shape.charAt(0).toUpperCase() + intention.shape.slice(1)} shape)`;
         
         document.getElementById('current-emotion').textContent = 
-            `Currently: ${emotion.icon} ${this.selfData.emotion.charAt(0).toUpperCase() + this.selfData.emotion.slice(1)}${emotion.effect !== 'none' ? ` (${emotion.effect.charAt(0).toUpperCase() + emotion.effect.slice(1)} effect)` : ''}`;
+            `Currently: ${emotion.icon} ${emotionKey.charAt(0).toUpperCase() + emotionKey.slice(1)}${emotion.effect !== 'none' ? ` (${emotion.effect.charAt(0).toUpperCase() + emotion.effect.slice(1)} effect)` : ''}`;
     }
     
     selectIntention(intention) {
@@ -402,23 +435,28 @@ export class UIManager {
         this.selectedUserId = userId;
         this.selectedUserData = userData;
         
-        // Populate user info
-        document.getElementById('user-display-name').textContent = `✧ ${userData.nickname || 'Anonymous'} ✧`;
+        const safeNickname = userData?.nickname || 'Anonymous';
+        const intentionKey = userData?.intention || 'observer';
+        const emotionKey = userData?.emotion || 'neutral';
+        const intention = INTENTIONS[intentionKey] || INTENTIONS.observer;
+        const emotion = EMOTIONS[emotionKey] || EMOTIONS.neutral;
+        const connectionTime = userData?.connectedAt ? formatConnectionTime(userData.connectedAt) : 'Moments ago';
+        const noteText = userData?.note ? `"${userData.note}"` : 'No note left...';
         
-        const intention = INTENTIONS[userData.intention];
-        const emotion = EMOTIONS[userData.emotion];
+        // Populate user info
+        document.getElementById('user-display-name').textContent = `✧ ${safeNickname} ✧`;
         
         document.getElementById('user-intention').textContent = 
-            `Intention: ${intention?.icon || '◯'} ${(userData.intention || 'observer').charAt(0).toUpperCase() + (userData.intention || 'observer').slice(1)}`;
+            `Intention: ${intention?.icon || '◯'} ${intentionKey.charAt(0).toUpperCase() + intentionKey.slice(1)}`;
         
         document.getElementById('user-emotion').textContent = 
-            `Emotion: ${emotion?.icon || '😐'} ${(userData.emotion || 'neutral').charAt(0).toUpperCase() + (userData.emotion || 'neutral').slice(1)}`;
+            `Emotion: ${emotion?.icon || '😐'} ${emotionKey.charAt(0).toUpperCase() + emotionKey.slice(1)}`;
         
         document.getElementById('user-note').textContent = 
-            userData.note ? `"${userData.note}"` : 'No note left...';
+            noteText;
         
         document.getElementById('user-connection-time').textContent = 
-            formatConnectionTime(userData.connectedAt);
+            connectionTime;
         
         // Shape preview
         const shapePreview = document.getElementById('user-shape-preview');
@@ -506,6 +544,7 @@ export class UIManager {
             joystickToggle.addEventListener('change', (e) => {
                 this.settings.showJoystick = e.target.checked;
                 this.applyJoystickSetting();
+                this.persistSettings();
             });
         }
         
@@ -515,6 +554,7 @@ export class UIManager {
             gyroToggle.addEventListener('change', async (e) => {
                 this.settings.enableGyroscope = e.target.checked;
                 await this.applyGyroscopeSetting();
+                this.persistSettings();
             });
         }
         
@@ -524,6 +564,7 @@ export class UIManager {
             labelsToggle.addEventListener('change', (e) => {
                 this.settings.showLabels = e.target.checked;
                 this.applyLabelsSetting();
+                this.persistSettings();
             });
         }
         
@@ -533,6 +574,7 @@ export class UIManager {
             particlesToggle.addEventListener('change', (e) => {
                 this.settings.showParticles = e.target.checked;
                 this.applyParticlesSetting();
+                this.persistSettings();
             });
         }
         
@@ -542,6 +584,7 @@ export class UIManager {
             autoRotateToggle.addEventListener('change', (e) => {
                 this.settings.autoRotate = e.target.checked;
                 this.applyAutoRotateSetting();
+                this.persistSettings();
             });
         }
         
@@ -551,27 +594,20 @@ export class UIManager {
             lowQualityToggle.addEventListener('change', (e) => {
                 this.settings.lowQuality = e.target.checked;
                 // Could implement quality reduction here
+                this.persistSettings();
             });
+        }
+
+        const clearDataBtn = document.getElementById('setting-clear-data');
+        if (clearDataBtn) {
+            clearDataBtn.addEventListener('click', () => this.clearLocalData());
         }
     }
     
     openSettingsMenu() {
         if (!this.settingsMenu) return;
         
-        // Sync toggle states with current settings
-        const joystickToggle = document.getElementById('setting-joystick');
-        const gyroToggle = document.getElementById('setting-gyroscope');
-        const labelsToggle = document.getElementById('setting-labels');
-        const particlesToggle = document.getElementById('setting-particles');
-        const autoRotateToggle = document.getElementById('setting-autorotate');
-        const lowQualityToggle = document.getElementById('setting-lowquality');
-        
-        if (joystickToggle) joystickToggle.checked = this.settings.showJoystick;
-        if (gyroToggle) gyroToggle.checked = this.settings.enableGyroscope;
-        if (labelsToggle) labelsToggle.checked = this.settings.showLabels;
-        if (particlesToggle) particlesToggle.checked = this.settings.showParticles;
-        if (autoRotateToggle) autoRotateToggle.checked = this.settings.autoRotate;
-        if (lowQualityToggle) lowQualityToggle.checked = this.settings.lowQuality;
+        this.syncSettingsToggles();
         
         showElement(this.settingsMenu, true);
     }
@@ -623,6 +659,83 @@ export class UIManager {
         if (!this.scene) return;
         
         this.scene.controls.autoRotate = this.settings.autoRotate;
+    }
+
+    syncSettingsToggles() {
+        const joystickToggle = document.getElementById('setting-joystick');
+        const gyroToggle = document.getElementById('setting-gyroscope');
+        const labelsToggle = document.getElementById('setting-labels');
+        const particlesToggle = document.getElementById('setting-particles');
+        const autoRotateToggle = document.getElementById('setting-autorotate');
+        const lowQualityToggle = document.getElementById('setting-lowquality');
+        
+        if (joystickToggle) joystickToggle.checked = this.settings.showJoystick;
+        if (gyroToggle) gyroToggle.checked = this.settings.enableGyroscope;
+        if (labelsToggle) labelsToggle.checked = this.settings.showLabels;
+        if (particlesToggle) particlesToggle.checked = this.settings.showParticles;
+        if (autoRotateToggle) autoRotateToggle.checked = this.settings.autoRotate;
+        if (lowQualityToggle) lowQualityToggle.checked = this.settings.lowQuality;
+    }
+    
+    applySettingsAfterLoad() {
+        this.applyJoystickSetting();
+        this.applyLabelsSetting();
+        this.applyParticlesSetting();
+        this.applyAutoRotateSetting();
+        
+        // Apply gyroscope only if user previously enabled it (may prompt permission)
+        if (this.settings.enableGyroscope) {
+            this.applyGyroscopeSetting();
+        }
+    }
+    
+    loadSavedSettings() {
+        const saved = loadFromLocal(this.storageKeys.settings, null);
+        if (saved) {
+            this.settings = { ...this.defaultSettings, ...saved };
+        }
+    }
+    
+    loadSavedProfile() {
+        const profile = loadFromLocal(this.storageKeys.profile, null);
+        if (!profile) return;
+        
+        const nickname = profile.nickname || '';
+        const note = profile.note || '';
+        
+        if (this.nicknameInput && nickname) this.nicknameInput.value = nickname;
+        if (this.noteInput && note) this.noteInput.value = note;
+        if (this.selfNickname && nickname) this.selfNickname.value = nickname;
+        if (this.selfNote && note) this.selfNote.value = note;
+    }
+    
+    persistSettings() {
+        saveToLocal(this.storageKeys.settings, this.settings);
+    }
+    
+    persistProfile() {
+        const nickname = (this.nicknameInput?.value || '').trim() || DEFAULT_USER.nickname;
+        const note = (this.noteInput?.value || '').trim();
+        saveToLocal(this.storageKeys.profile, { nickname, note });
+    }
+    
+    clearLocalData() {
+        clearLocalKeys([this.storageKeys.profile, this.storageKeys.settings]);
+        this.settings = { ...this.defaultSettings };
+        this.syncSettingsToggles();
+        this.applySettingsAfterLoad();
+        
+        if (this.nicknameInput) this.nicknameInput.value = '';
+        if (this.noteInput) this.noteInput.value = '';
+        if (this.selfNickname) this.selfNickname.value = '';
+        if (this.selfNote) this.selfNote.value = '';
+        
+        if (this.firebase) {
+            this.firebase.updateNickname(DEFAULT_USER.nickname);
+            this.firebase.updateNote('');
+        }
+        
+        alert('Local data cleared. Please re-enter your name and settings.');
     }
     
     // ========================

@@ -54,6 +54,10 @@ export class CosmicScene {
         this.gyroscopeInput = null;
         this.deviceOrientation = { alpha: 0, beta: 0, gamma: 0 };
         this.gyroscopeCalibration = null;
+        
+        // Tap detection
+        this.pointerDown = { x: 0, y: 0, time: 0 };
+        this.tapHandled = false;
     }
     
     async init() {
@@ -606,6 +610,8 @@ export class CosmicScene {
         this.controls.lastMouseX = event.clientX;
         this.controls.lastMouseY = event.clientY;
         this.controls.autoRotate = false;
+        this.pointerDown = { x: event.clientX, y: event.clientY, time: Date.now() };
+        this.tapHandled = false;
     }
     
     onPointerMove(event) {
@@ -626,8 +632,19 @@ export class CosmicScene {
         this.controls.lastMouseY = event.clientY;
     }
     
-    onPointerUp() {
+    onPointerUp(event) {
         this.controls.isDragging = false;
+        
+        const distance = Math.hypot(
+            event.clientX - this.pointerDown.x,
+            event.clientY - this.pointerDown.y
+        );
+        const duration = Date.now() - this.pointerDown.time;
+        
+        if (distance < 8 && duration < 300) {
+            this.tapHandled = true;
+            this.handleSelection(event.clientX, event.clientY);
+        }
     }
     
     onWheel(event) {
@@ -651,6 +668,12 @@ export class CosmicScene {
             this.controls.lastMouseX = event.touches[0].clientX;
             this.controls.lastMouseY = event.touches[0].clientY;
             this.controls.autoRotate = false;
+            this.pointerDown = { 
+                x: event.touches[0].clientX, 
+                y: event.touches[0].clientY, 
+                time: Date.now() 
+            };
+            this.tapHandled = false;
         } else if (event.touches.length === 2) {
             this.controls.pinchDistance = this.getPinchDistance(event.touches);
         }
@@ -687,8 +710,22 @@ export class CosmicScene {
         }
     }
     
-    onTouchEnd() {
+    onTouchEnd(event) {
         this.controls.isDragging = false;
+        
+        if (event.touches.length === 0 && event.changedTouches && event.changedTouches.length === 1) {
+            const touch = event.changedTouches[0];
+            const distance = Math.hypot(
+                touch.clientX - this.pointerDown.x,
+                touch.clientY - this.pointerDown.y
+            );
+            const duration = Date.now() - this.pointerDown.time;
+            
+            if (distance < 12 && duration < 350) {
+                this.tapHandled = true;
+                this.handleSelection(touch.clientX, touch.clientY);
+            }
+        }
     }
     
     getPinchDistance(touches) {
@@ -698,13 +735,19 @@ export class CosmicScene {
     }
     
     onClick(event) {
-        // Calculate mouse position in normalized device coordinates
-        this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        if (this.tapHandled) {
+            this.tapHandled = false;
+            return;
+        }
+        this.handleSelection(event.clientX, event.clientY);
+    }
+    
+    handleSelection(clientX, clientY) {
+        this.mouse.x = (clientX / window.innerWidth) * 2 - 1;
+        this.mouse.y = -(clientY / window.innerHeight) * 2 + 1;
         
         this.raycaster.setFromCamera(this.mouse, this.camera);
         
-        // Get all user meshes
         const userMeshes = [];
         this.users.forEach((userShape, userId) => {
             if (userShape.group) {
@@ -716,7 +759,6 @@ export class CosmicScene {
         const intersects = this.raycaster.intersectObjects(userMeshes, true);
         
         if (intersects.length > 0) {
-            // Find the parent group with userId
             let object = intersects[0].object;
             while (object && !object.userData.userId) {
                 object = object.parent;

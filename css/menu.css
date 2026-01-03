@@ -17,6 +17,7 @@
     opacity: 0;
     visibility: hidden;
     transition: opacity var(--transition-normal), visibility var(--transition-normal);
+    touch-action: auto;
 }
 
 .modal-overlay.visible {
@@ -559,6 +560,32 @@
 .setting-desc {
     font-size: 0.75rem;
     color: var(--star-faint);
+}
+
+.settings-action-btn {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--star-white);
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.settings-action-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.settings-action-btn.danger {
+    border-color: rgba(239, 68, 68, 0.6);
+    color: #fecaca;
+}
+
+.settings-action-btn.danger:hover {
+    background: rgba(239, 68, 68, 0.15);
 }
 
 /* Toggle Switch */

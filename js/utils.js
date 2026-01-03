@@ -217,3 +217,41 @@ export function pluralize(count, singular, plural = null) {
     }
     return plural || `${singular}s`;
 }
+
+/**
+ * Safely load JSON data from localStorage
+ */
+export function loadFromLocal(key, defaultValue = null) {
+    try {
+        const raw = localStorage.getItem(key);
+        if (raw === null || raw === undefined) return defaultValue;
+        return JSON.parse(raw);
+    } catch (error) {
+        console.warn('Failed to load local data for', key, error);
+        return defaultValue;
+    }
+}
+
+/**
+ * Safely persist JSON data to localStorage
+ */
+export function saveToLocal(key, value) {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+        console.warn('Failed to save local data for', key, error);
+    }
+}
+
+/**
+ * Clear a set of localStorage keys
+ */
+export function clearLocalKeys(keys = []) {
+    try {
+        keys.forEach(key => localStorage.removeItem(key));
+        return true;
+    } catch (error) {
+        console.warn('Failed to clear local data', error);
+        return false;
+    }
+}
