@@ -21,11 +21,19 @@ export class FirebaseSync {
         this.onUserRemoved = null;
         this.onActiveUserCountChanged = null;
         this.onConnectionStateChanged = null;
+        this.onCapacityWarning = null;
+        this.onCapacityReached = null;
+        this.onDisconnected = null;
         
         // Sacred Geometry callbacks
         this.onSacredGeometryCreated = null;
         this.onSacredGeometryUpdated = null;
         this.onSacredGeometryRemoved = null;
+        
+        // Connection limits
+        this.MAX_CONNECTIONS = 100;
+        this.WARNING_THRESHOLD = 90;
+        this.currentUserCount = 0;
     }
     
     async init() {
@@ -39,15 +47,77 @@ export class FirebaseSync {
         this.usersRef = this.db.ref('users');
         this.sacredGeometryRef = this.db.ref('sacredGeometry');
         
-        // Listen for connection state
+        // Listen for connection state with graceful handling
         this.db.ref('.info/connected').on('value', (snapshot) => {
+            const wasConnected = this.isConnected;
             this.isConnected = snapshot.val() === true;
-            if (this.onConnectionStateChanged) {
-                this.onConnectionStateChanged(this.isConnected);
+            
+            if (this.isConnected) {
+                console.log('🌌 Connected to cosmic field');
+                if (this.onConnectionStateChanged) {
+                    this.onConnectionStateChanged(true);
+                }
+            } else {
+                console.log('🌌 Disconnected from cosmic field');
+                if (wasConnected && this.onDisconnected) {
+                    this.onDisconnected();
+                }
+                if (this.onConnectionStateChanged) {
+                    this.onConnectionStateChanged(false);
+                }
             }
         });
         
+        // Monitor connection capacity
+        this.startCapacityMonitoring();
+        
         return this;
+    }
+    
+    startCapacityMonitoring() {
+        // Monitor total connections for capacity limits
+        this.usersRef.on('value', (snapshot) => {
+            const count = snapshot.numChildren();
+            this.currentUserCount = count;
+            
+            // Warn when approaching limit
+            if (count >= this.WARNING_THRESHOLD && count < this.MAX_CONNECTIONS) {
+                console.warn(`🌌 Approaching connection limit: ${count}/${this.MAX_CONNECTIONS}`);
+                if (this.onCapacityWarning) {
+                    this.onCapacityWarning(count, this.MAX_CONNECTIONS);
+                }
+            }
+            
+            // At capacity
+            if (count >= this.MAX_CONNECTIONS) {
+                console.error(`🌌 Cosmic field at capacity: ${count}/${this.MAX_CONNECTIONS}`);
+                if (this.onCapacityReached) {
+                    this.onCapacityReached(count, this.MAX_CONNECTIONS);
+                }
+            }
+        });
+    }
+    
+    async checkCapacity() {
+        // Check if there's room before connecting
+        const snapshot = await this.usersRef.once('value');
+        const count = snapshot.numChildren();
+        
+        if (count >= this.MAX_CONNECTIONS) {
+            return {
+                canConnect: false,
+                currentCount: count,
+                maxCount: this.MAX_CONNECTIONS,
+                message: 'The cosmic field is at capacity. Please try again soon.'
+            };
+        }
+        
+        return {
+            canConnect: true,
+            currentCount: count,
+            maxCount: this.MAX_CONNECTIONS,
+            spotsRemaining: this.MAX_CONNECTIONS - count
+        };
     }
     
     getSessionId() {
@@ -55,6 +125,12 @@ export class FirebaseSync {
     }
     
     async connect(initialData = {}) {
+        // Check capacity before connecting
+        const capacity = await this.checkCapacity();
+        if (!capacity.canConnect) {
+            throw new Error(capacity.message);
+        }
+        
         const userData = {
             nickname: initialData.nickname || DEFAULT_USER.nickname,
             note: initialData.note || DEFAULT_USER.note,

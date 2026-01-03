@@ -118,6 +118,21 @@ class HypnoApp {
             console.log('🌌 Connection state:', isConnected ? 'Connected' : 'Disconnected');
         };
         
+        // Disconnection handler
+        this.firebase.onDisconnected = () => {
+            this.showMessage('Lost connection to the cosmic field. Attempting to reconnect...');
+        };
+        
+        // Capacity warning
+        this.firebase.onCapacityWarning = (count, max) => {
+            console.warn(`🌌 Cosmic field nearing capacity: ${count}/${max}`);
+        };
+        
+        // Capacity reached
+        this.firebase.onCapacityReached = (count, max) => {
+            this.showMessage(`The cosmic field is at capacity (${count}/${max} souls). Some features may be limited.`);
+        };
+        
         // Sacred Geometry callbacks
         this.firebase.onSacredGeometryCreated = (geometryId, geometryData) => {
             console.log('🌌 Sacred Geometry created:', geometryId);
@@ -482,7 +497,13 @@ class HypnoApp {
             
         } catch (error) {
             console.error('🌌 Failed to enter:', error);
-            this.showError('Failed to join the cosmic field. Please try again.');
+            
+            // Check if it's a capacity error
+            if (error.message && error.message.includes('capacity')) {
+                this.showError(error.message);
+            } else {
+                this.showError('Failed to join the cosmic field. Please try again.');
+            }
         }
     }
     
@@ -577,6 +598,29 @@ class HypnoApp {
             loadingText.textContent = message;
             loadingText.style.color = '#EF4444';
         }
+    }
+    
+    showMessage(message, type = 'info') {
+        // Create or reuse toast notification
+        let toast = document.getElementById('hypno-toast');
+        
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'hypno-toast';
+            toast.className = 'hypno-toast';
+            document.body.appendChild(toast);
+        }
+        
+        // Set content and type
+        toast.textContent = message;
+        toast.className = `hypno-toast ${type}`;
+        toast.classList.add('visible');
+        
+        // Auto-hide after 5 seconds
+        clearTimeout(this.toastTimeout);
+        this.toastTimeout = setTimeout(() => {
+            toast.classList.remove('visible');
+        }, 5000);
     }
     
     // Cleanup on page unload
