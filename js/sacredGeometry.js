@@ -56,8 +56,8 @@ export class SacredGeometryGroup {
         this.pulsePhase = Math.random() * Math.PI * 2;
         
         // Orbital animation for members
-        this.orbitSpeed = 0.15; // Radians per second
-        this.orbitRadius = 35;
+        this.orbitSpeed = 0.2; // Radians per second - slightly faster for more visible motion
+        this.orbitRadius = 12; // Much smaller - keeps users inside the geometry visually
         this.orbitAngle = 0;
         this.memberIds = []; // Track member user IDs for orbital animation
         
@@ -79,7 +79,7 @@ export class SacredGeometryGroup {
         
         // Initialize member list for orbital animation
         this.updateMemberList();
-        this.orbitRadius = 35 + this.memberIds.length * 5;
+        this.orbitRadius = 12 + this.memberIds.length * 3; // Compact radius to keep users inside geometry
         
         // Create the sacred geometry
         this.createSacredPattern();
@@ -1039,8 +1039,8 @@ export class SacredGeometryGroup {
         // Update member list for orbital animation
         this.updateMemberList();
         
-        // Update orbit radius based on member count
-        this.orbitRadius = 35 + newMemberCount * 5;
+        // Update orbit radius based on member count - keep compact
+        this.orbitRadius = 12 + newMemberCount * 3;
         
         if (newMemberCount !== oldMemberCount) {
             this.rebuildGeometry();
@@ -1169,8 +1169,8 @@ export class SacredGeometryGroup {
         const center = this.data.center;
         const memberCount = activeMemberIds.length;
         
-        // Calculate orbit radius based on member count
-        const radius = this.orbitRadius + memberCount * 5;
+        // Use the already calculated orbit radius (don't add extra)
+        const radius = this.orbitRadius;
         
         // Animate each member
         activeMemberIds.forEach((memberId, index) => {
@@ -1192,7 +1192,7 @@ export class SacredGeometryGroup {
             
             // Smoothly interpolate to target position
             const currentPos = userShape.group.position;
-            const lerpFactor = 0.05; // Smooth interpolation
+            const lerpFactor = 0.08; // Faster interpolation for more visible movement
             
             userShape.group.position.x += (targetX - currentPos.x) * lerpFactor;
             userShape.group.position.y += (targetY - currentPos.y) * lerpFactor;
@@ -1263,7 +1263,8 @@ export class SacredGeometryGroup {
     // ========================
     
     getMemberPosition(index, total) {
-        const radius = 35 + total * 5;
+        // Compact radius keeps members inside the geometry visual
+        const radius = this.orbitRadius || (12 + total * 3);
         const angle = (index / total) * Math.PI * 2;
         
         return {
