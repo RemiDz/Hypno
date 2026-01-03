@@ -1156,27 +1156,54 @@
 
 @media (max-width: 768px) {
     .modal-overlay {
-        padding: var(--space-md);
-        align-items: flex-end;
+        padding: var(--space-sm);
+        align-items: center; /* Center modal vertically */
         -webkit-backdrop-filter: blur(8px);
         backdrop-filter: blur(8px);
     }
     
     .modal {
-        max-height: 88vh;
-        border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+        max-height: 92vh;
+        border-radius: var(--radius-xl);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
     
+    /* Welcome modal needs to show all content */
     .welcome-modal {
-        padding: var(--space-2xl) var(--space-lg);
+        padding: var(--space-xl) var(--space-lg);
+        max-height: 90vh;
+        overflow-y: auto;
     }
     
     .welcome-title {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
+        margin-bottom: var(--space-sm);
     }
     
     .welcome-subtitle {
-        font-size: 0.95rem;
+        font-size: 0.85rem;
+        margin-bottom: var(--space-lg);
+        line-height: 1.5;
+    }
+    
+    .welcome-modal .form-group {
+        margin-bottom: var(--space-md);
+    }
+    
+    .welcome-modal .form-group label {
+        font-size: 0.7rem;
+        margin-bottom: var(--space-xs);
+    }
+    
+    .welcome-modal .cosmic-input,
+    .welcome-modal .cosmic-textarea {
+        padding: var(--space-sm) var(--space-md);
+        font-size: 16px; /* Prevents iOS zoom */
+    }
+    
+    .welcome-modal .cosmic-textarea {
+        min-height: 60px;
     }
     
     .intention-grid,
@@ -1201,8 +1228,9 @@
     }
     
     .cosmic-button {
-        padding: 14px 32px;
-        font-size: 0.9rem;
+        padding: 12px 24px;
+        font-size: 0.85rem;
+        margin-top: var(--space-md);
     }
     
     .stats-row {
@@ -1210,12 +1238,61 @@
         gap: var(--space-md);
     }
     
+    /* Sacred Geometry panel - compact on mobile */
     .sg-active-panel {
+        position: fixed;
         top: auto;
-        bottom: 24px;
+        bottom: 80px; /* Above bottom buttons */
         right: 12px;
-        left: 12px;
+        left: auto;
         width: auto;
+        min-width: 180px;
+        max-width: 220px;
+        padding: var(--space-sm) var(--space-md);
+        border-radius: var(--radius-lg);
+    }
+    
+    .sg-panel-header {
+        margin-bottom: var(--space-sm);
+        padding-bottom: var(--space-sm);
+    }
+    
+    .sg-panel-icon {
+        font-size: 1rem;
+    }
+    
+    .sg-panel-title {
+        font-size: 0.75rem;
+    }
+    
+    .sg-panel-members {
+        margin-bottom: var(--space-sm);
+        max-height: 60px;
+        overflow-y: auto;
+    }
+    
+    .sg-member {
+        padding: 2px 0;
+        font-size: 0.75rem;
+    }
+    
+    .sg-member-icon {
+        width: 6px;
+        height: 6px;
+    }
+    
+    .sg-panel-audio {
+        margin-bottom: var(--space-sm);
+    }
+    
+    .sg-audio-btn {
+        padding: 8px var(--space-md);
+        font-size: 0.7rem;
+    }
+    
+    .sg-leave-btn {
+        padding: 6px var(--space-md);
+        font-size: 0.65rem;
     }
     
     .sg-info-stats {
@@ -1227,5 +1304,14 @@
     .intention-grid,
     .emotion-grid {
         grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .welcome-title {
+        font-size: 1.3rem;
+    }
+    
+    .sg-active-panel {
+        min-width: 160px;
+        max-width: 180px;
     }
 }
