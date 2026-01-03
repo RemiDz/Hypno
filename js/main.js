@@ -681,24 +681,30 @@ class HypnoApp {
             if (joinBtn && joinNote) {
                 // Check if user is already in this geometry
                 const isInThisGeometry = this.selfData?.sacredGeometryId === geometryId;
-                // Check if user is in any geometry
-                const isInAnyGeometry = !!this.selfData?.sacredGeometryId;
+                // Check if user is in any other geometry
+                const isInAnotherGeometry = this.selfData?.sacredGeometryId && this.selfData.sacredGeometryId !== geometryId;
                 
                 if (isInThisGeometry) {
                     joinBtn.disabled = true;
                     joinBtn.querySelector('.button-text').textContent = '✧ YOU ARE HERE ✧';
                     joinNote.textContent = 'You are a member of this Sacred Geometry';
-                } else if (isInAnyGeometry) {
-                    joinBtn.disabled = true;
-                    joinBtn.querySelector('.button-text').textContent = '✧ JOIN THIS GEOMETRY ✧';
-                    joinNote.textContent = 'Leave your current geometry first to join another';
                 } else {
                     joinBtn.disabled = false;
                     joinBtn.querySelector('.button-text').textContent = '✧ JOIN THIS GEOMETRY ✧';
-                    joinNote.textContent = '';
+                    joinNote.textContent = isInAnotherGeometry ? 'You will leave your current geometry' : '';
                     
                     // Set up click handler
                     joinBtn.onclick = async () => {
+                        // If in another geometry, leave it first
+                        if (isInAnotherGeometry) {
+                            // Stop audio if playing
+                            if (this.currentSacredGeometry) {
+                                this.currentSacredGeometry.stopBinauralBeats();
+                            }
+                            await this.firebase.leaveSacredGeometry();
+                        }
+                        
+                        // Join the new geometry
                         await this.firebase.joinSacredGeometry(geometryId);
                         this.selfData = await this.firebase.getSelfData();
                         this.currentSacredGeometry = this.sacredGeometryManager.getGeometry(geometryId);

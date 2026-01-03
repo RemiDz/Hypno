@@ -85,9 +85,8 @@ export class SacredGeometryGroup {
     }
     
     createHitbox() {
-        // Invisible sphere for click detection
-        const memberCount = Object.keys(this.data.members || {}).length;
-        const radius = 25 + memberCount * 5;
+        // Small sphere at center for click detection (only center is clickable)
+        const radius = 8; // Small fixed radius for center-only click
         
         const geometry = new THREE.SphereGeometry(radius, 16, 16);
         const material = new THREE.MeshBasicMaterial({
