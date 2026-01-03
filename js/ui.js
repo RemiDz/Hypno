@@ -202,6 +202,20 @@ export class UIManager {
                 ease: 'back.out(1.7)'
             });
         }
+        
+        // Show gyroscope button ONLY on mobile devices
+        const gyroscopeBtn = document.getElementById('gyroscope-btn');
+        if (gyroscopeBtn && this.isMobile()) {
+            gyroscopeBtn.classList.remove('hidden');
+            
+            gsap.from(gyroscopeBtn, {
+                scale: 0,
+                opacity: 0,
+                duration: 0.5,
+                delay: 0.8,
+                ease: 'back.out(1.7)'
+            });
+        }
     }
     
     isMobile() {

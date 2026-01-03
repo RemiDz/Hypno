@@ -32,6 +32,17 @@ export function createEmotionEffect(emotion, parent) {
             return createElectricity(parent, emotionData);
         case 'mist':
             return createMist(parent, emotionData);
+        // NEW EMOTIONS
+        case 'hearts':
+            return createHearts(parent, emotionData);
+        case 'fireworks':
+            return createFireworks(parent, emotionData);
+        case 'aurora':
+            return createAurora(parent, emotionData);
+        case 'stardust':
+            return createStardust(parent, emotionData);
+        case 'flames':
+            return createFlames(parent, emotionData);
         default:
             return null;
     }
@@ -573,6 +584,389 @@ function createMist(parent, emotionData) {
             
             // Fade in and out
             material.opacity = 0.15 + Math.sin(elapsed * 0.5) * 0.05;
+        },
+        dispose: () => {
+            parent.remove(particles);
+            geometry.dispose();
+            material.dispose();
+        }
+    };
+}
+
+// ============================================
+// NEW EMOTION EFFECTS
+// ============================================
+
+/**
+ * Hearts (Loving) - Floating heart particles
+ */
+function createHearts(parent, emotionData) {
+    const particleCount = 25;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    const velocities = [];
+    
+    for (let i = 0; i < particleCount; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 6;
+        positions[i * 3 + 1] = Math.random() * 6 - 3;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 6;
+        velocities.push({
+            y: 0.3 + Math.random() * 0.5,
+            sway: Math.random() * Math.PI * 2,
+            swaySpeed: 1 + Math.random()
+        });
+    }
+    
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    
+    const material = new THREE.PointsMaterial({
+        color: emotionData.particleColorHex,
+        size: 0.4,
+        transparent: true,
+        opacity: 0.8,
+        blending: THREE.AdditiveBlending,
+        sizeAttenuation: true
+    });
+    
+    const particles = new THREE.Points(geometry, material);
+    parent.add(particles);
+    
+    return {
+        particles,
+        geometry,
+        material,
+        velocities,
+        animate: (delta, elapsed) => {
+            const positions = geometry.attributes.position.array;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const vel = velocities[i];
+                positions[i * 3 + 1] += vel.y * delta;
+                positions[i * 3] += Math.sin(elapsed * vel.swaySpeed + vel.sway) * 0.02;
+                
+                if (positions[i * 3 + 1] > 5) {
+                    positions[i * 3 + 1] = -3;
+                    positions[i * 3] = (Math.random() - 0.5) * 6;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 6;
+                }
+            }
+            
+            material.opacity = 0.6 + Math.sin(elapsed * 2) * 0.2;
+            geometry.attributes.position.needsUpdate = true;
+        },
+        dispose: () => {
+            parent.remove(particles);
+            geometry.dispose();
+            material.dispose();
+        }
+    };
+}
+
+/**
+ * Fireworks (Excited) - Bursting particle explosions
+ */
+function createFireworks(parent, emotionData) {
+    const burstCount = 3;
+    const particlesPerBurst = 20;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(burstCount * particlesPerBurst * 3);
+    const velocities = [];
+    const bursts = [];
+    
+    for (let b = 0; b < burstCount; b++) {
+        const burstCenter = {
+            x: (Math.random() - 0.5) * 4,
+            y: (Math.random() - 0.5) * 4,
+            z: (Math.random() - 0.5) * 4
+        };
+        bursts.push({
+            center: burstCenter,
+            age: Math.random() * 2,
+            maxAge: 1.5 + Math.random()
+        });
+        
+        for (let p = 0; p < particlesPerBurst; p++) {
+            const i = b * particlesPerBurst + p;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.random() * Math.PI;
+            
+            positions[i * 3] = burstCenter.x;
+            positions[i * 3 + 1] = burstCenter.y;
+            positions[i * 3 + 2] = burstCenter.z;
+            
+            velocities.push({
+                x: Math.sin(phi) * Math.cos(theta) * (1 + Math.random()),
+                y: Math.sin(phi) * Math.sin(theta) * (1 + Math.random()),
+                z: Math.cos(phi) * (1 + Math.random()),
+                burst: b
+            });
+        }
+    }
+    
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    
+    const material = new THREE.PointsMaterial({
+        color: emotionData.particleColorHex,
+        size: 0.25,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending,
+        sizeAttenuation: true
+    });
+    
+    const particles = new THREE.Points(geometry, material);
+    parent.add(particles);
+    
+    return {
+        particles,
+        geometry,
+        material,
+        velocities,
+        bursts,
+        animate: (delta, elapsed) => {
+            const positions = geometry.attributes.position.array;
+            
+            for (let b = 0; b < burstCount; b++) {
+                const burst = bursts[b];
+                burst.age += delta;
+                
+                if (burst.age > burst.maxAge) {
+                    burst.age = 0;
+                    burst.center.x = (Math.random() - 0.5) * 4;
+                    burst.center.y = (Math.random() - 0.5) * 4;
+                    burst.center.z = (Math.random() - 0.5) * 4;
+                    
+                    for (let p = 0; p < particlesPerBurst; p++) {
+                        const i = b * particlesPerBurst + p;
+                        positions[i * 3] = burst.center.x;
+                        positions[i * 3 + 1] = burst.center.y;
+                        positions[i * 3 + 2] = burst.center.z;
+                    }
+                }
+                
+                const progress = burst.age / burst.maxAge;
+                
+                for (let p = 0; p < particlesPerBurst; p++) {
+                    const i = b * particlesPerBurst + p;
+                    const vel = velocities[i];
+                    
+                    positions[i * 3] += vel.x * delta * 3 * (1 - progress);
+                    positions[i * 3 + 1] += vel.y * delta * 3 * (1 - progress) - delta * 2 * progress;
+                    positions[i * 3 + 2] += vel.z * delta * 3 * (1 - progress);
+                }
+            }
+            
+            geometry.attributes.position.needsUpdate = true;
+        },
+        dispose: () => {
+            parent.remove(particles);
+            geometry.dispose();
+            material.dispose();
+        }
+    };
+}
+
+/**
+ * Aurora (Serene) - Northern lights ribbon effect
+ */
+function createAurora(parent, emotionData) {
+    const ribbonCount = 3;
+    const ribbons = [];
+    
+    for (let r = 0; r < ribbonCount; r++) {
+        const points = [];
+        const segments = 30;
+        
+        for (let i = 0; i <= segments; i++) {
+            const t = i / segments;
+            const x = (t - 0.5) * 8;
+            const y = Math.sin(t * Math.PI * 2 + r * 2) * 1.5 + r * 0.5;
+            const z = Math.cos(t * Math.PI + r) * 0.5;
+            points.push(new THREE.Vector3(x, y, z));
+        }
+        
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const material = new THREE.LineBasicMaterial({
+            color: emotionData.particleColorHex,
+            transparent: true,
+            opacity: 0.4,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const line = new THREE.Line(geometry, material);
+        parent.add(line);
+        ribbons.push({ line, geometry, material, segments, offset: r * 2 });
+    }
+    
+    return {
+        ribbons,
+        animate: (delta, elapsed) => {
+            ribbons.forEach((ribbon, r) => {
+                const positions = ribbon.geometry.attributes.position.array;
+                
+                for (let i = 0; i <= ribbon.segments; i++) {
+                    const t = i / ribbon.segments;
+                    positions[i * 3 + 1] = Math.sin(t * Math.PI * 2 + elapsed * 0.5 + ribbon.offset) * 1.5 + r * 0.5;
+                    positions[i * 3 + 2] = Math.cos(t * Math.PI + elapsed * 0.3 + ribbon.offset) * 0.5;
+                }
+                
+                ribbon.geometry.attributes.position.needsUpdate = true;
+                ribbon.material.opacity = 0.3 + Math.sin(elapsed * 0.5 + r) * 0.15;
+            });
+        },
+        dispose: () => {
+            ribbons.forEach(ribbon => {
+                parent.remove(ribbon.line);
+                ribbon.geometry.dispose();
+                ribbon.material.dispose();
+            });
+        }
+    };
+}
+
+/**
+ * Stardust (Inspired) - Magical twinkling dust trail
+ */
+function createStardust(parent, emotionData) {
+    const particleCount = 50;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    const phases = new Float32Array(particleCount);
+    const speeds = new Float32Array(particleCount);
+    
+    for (let i = 0; i < particleCount; i++) {
+        const theta = Math.random() * Math.PI * 2;
+        const radius = 2 + Math.random() * 3;
+        
+        positions[i * 3] = Math.cos(theta) * radius;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 4;
+        positions[i * 3 + 2] = Math.sin(theta) * radius;
+        phases[i] = Math.random() * Math.PI * 2;
+        speeds[i] = 0.5 + Math.random() * 0.5;
+    }
+    
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    
+    const material = new THREE.PointsMaterial({
+        color: emotionData.particleColorHex,
+        size: 0.2,
+        transparent: true,
+        opacity: 0.8,
+        blending: THREE.AdditiveBlending,
+        sizeAttenuation: true
+    });
+    
+    const particles = new THREE.Points(geometry, material);
+    parent.add(particles);
+    
+    return {
+        particles,
+        geometry,
+        material,
+        phases,
+        speeds,
+        animate: (delta, elapsed) => {
+            const positions = geometry.attributes.position.array;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const phase = phases[i];
+                const speed = speeds[i];
+                const t = elapsed * speed + phase;
+                
+                const radius = 2 + Math.sin(t * 0.5) * 1.5;
+                const theta = t * 0.3 + phase;
+                
+                positions[i * 3] = Math.cos(theta) * radius;
+                positions[i * 3 + 1] += Math.sin(t * 2) * 0.01;
+                positions[i * 3 + 2] = Math.sin(theta) * radius;
+                
+                // Wrap around
+                if (positions[i * 3 + 1] > 3) positions[i * 3 + 1] = -3;
+                if (positions[i * 3 + 1] < -3) positions[i * 3 + 1] = 3;
+            }
+            
+            material.opacity = 0.6 + Math.sin(elapsed * 3) * 0.3;
+            geometry.attributes.position.needsUpdate = true;
+            particles.rotation.y += delta * 0.2;
+        },
+        dispose: () => {
+            parent.remove(particles);
+            geometry.dispose();
+            material.dispose();
+        }
+    };
+}
+
+/**
+ * Flames (Determined) - Rising flame particles
+ */
+function createFlames(parent, emotionData) {
+    const particleCount = 45;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    const velocities = [];
+    const lifetimes = [];
+    
+    for (let i = 0; i < particleCount; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = Math.random() * 1.5;
+        
+        positions[i * 3] = Math.cos(angle) * radius;
+        positions[i * 3 + 1] = Math.random() * 3 - 1;
+        positions[i * 3 + 2] = Math.sin(angle) * radius;
+        
+        velocities.push({
+            y: 1.5 + Math.random() * 2,
+            sway: Math.random() * 0.5,
+            swayPhase: Math.random() * Math.PI * 2
+        });
+        lifetimes.push(Math.random());
+    }
+    
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    
+    const material = new THREE.PointsMaterial({
+        color: emotionData.particleColorHex,
+        size: 0.35,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending,
+        sizeAttenuation: true
+    });
+    
+    const particles = new THREE.Points(geometry, material);
+    parent.add(particles);
+    
+    return {
+        particles,
+        geometry,
+        material,
+        velocities,
+        lifetimes,
+        animate: (delta, elapsed) => {
+            const positions = geometry.attributes.position.array;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const vel = velocities[i];
+                lifetimes[i] += delta;
+                
+                positions[i * 3 + 1] += vel.y * delta;
+                positions[i * 3] += Math.sin(elapsed * 5 + vel.swayPhase) * vel.sway * delta;
+                positions[i * 3 + 2] += Math.cos(elapsed * 5 + vel.swayPhase) * vel.sway * delta;
+                
+                // Reset particle
+                if (positions[i * 3 + 1] > 4 || lifetimes[i] > 1.5) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = Math.random() * 1.5;
+                    
+                    positions[i * 3] = Math.cos(angle) * radius;
+                    positions[i * 3 + 1] = -1 + Math.random() * 0.5;
+                    positions[i * 3 + 2] = Math.sin(angle) * radius;
+                    lifetimes[i] = 0;
+                }
+            }
+            
+            geometry.attributes.position.needsUpdate = true;
         },
         dispose: () => {
             parent.remove(particles);

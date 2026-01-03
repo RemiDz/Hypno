@@ -328,6 +328,17 @@
 .intention-btn[data-intention="wisdom"].active { border-color: var(--wisdom); }
 .intention-btn[data-intention="unity"]:hover,
 .intention-btn[data-intention="unity"].active { border-color: var(--unity); }
+/* NEW INTENTIONS */
+.intention-btn[data-intention="dream"]:hover,
+.intention-btn[data-intention="dream"].active { border-color: #C4B5FD; }
+.intention-btn[data-intention="strength"]:hover,
+.intention-btn[data-intention="strength"].active { border-color: #DC2626; }
+.intention-btn[data-intention="flow"]:hover,
+.intention-btn[data-intention="flow"].active { border-color: #0EA5E9; }
+.intention-btn[data-intention="protection"]:hover,
+.intention-btn[data-intention="protection"].active { border-color: #65A30D; }
+.intention-btn[data-intention="abundance"]:hover,
+.intention-btn[data-intention="abundance"].active { border-color: #D97706; }
 
 /* Current Selection */
 .current-selection {

@@ -32,6 +32,17 @@ export function createShapeGeometry(intention) {
             return createPyramid();
         case 'infinity':
             return createInfinity();
+        // NEW SHAPES
+        case 'cloud':
+            return createCloud();
+        case 'cube':
+            return createCube();
+        case 'wave':
+            return createWave();
+        case 'shield':
+            return createShield();
+        case 'dodecahedron':
+            return createDodecahedron();
         default:
             return createOrbit();
     }
@@ -315,6 +326,99 @@ function createInfinity() {
     const curve = new InfinityCurve();
     const geometry = new THREE.TubeGeometry(curve, 100, 0.12, 8, true);
     
+    return geometry;
+}
+
+// ============================================
+// NEW SHAPES
+// ============================================
+
+/**
+ * Cloud (Dream) - Soft cloud-like shape
+ */
+function createCloud() {
+    const geometry = new THREE.SphereGeometry(1, 16, 16);
+    
+    // Combine multiple spheres to create cloud effect
+    const positions = geometry.attributes.position;
+    for (let i = 0; i < positions.count; i++) {
+        const x = positions.getX(i);
+        const y = positions.getY(i);
+        const z = positions.getZ(i);
+        
+        // Add lumpy cloud-like deformation
+        const noise = Math.sin(x * 3) * Math.cos(y * 3) * Math.sin(z * 3) * 0.3;
+        const scale = 1 + noise + Math.abs(Math.sin(i * 0.5)) * 0.2;
+        
+        positions.setXYZ(i, x * scale, y * 0.7 * scale, z * scale);
+    }
+    
+    geometry.computeVertexNormals();
+    geometry.scale(1.5, 1, 1.5);
+    
+    return geometry;
+}
+
+/**
+ * Cube (Strength) - Solid cube shape
+ */
+function createCube() {
+    const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5, 2, 2, 2);
+    return geometry;
+}
+
+/**
+ * Wave (Flow) - Flowing wave shape
+ */
+function createWave() {
+    class WaveCurve extends THREE.Curve {
+        getPoint(t) {
+            const x = (t - 0.5) * 4;
+            const y = Math.sin(t * Math.PI * 3) * 0.5;
+            const z = Math.cos(t * Math.PI * 2) * 0.3;
+            return new THREE.Vector3(x, y, z);
+        }
+    }
+    
+    const curve = new WaveCurve();
+    const geometry = new THREE.TubeGeometry(curve, 64, 0.15, 8, false);
+    
+    return geometry;
+}
+
+/**
+ * Shield (Protection) - Protective shield shape
+ */
+function createShield() {
+    const shape = new THREE.Shape();
+    
+    // Shield outline
+    shape.moveTo(0, 1.2);
+    shape.quadraticCurveTo(0.8, 1, 0.8, 0.3);
+    shape.quadraticCurveTo(0.8, -0.5, 0, -1);
+    shape.quadraticCurveTo(-0.8, -0.5, -0.8, 0.3);
+    shape.quadraticCurveTo(-0.8, 1, 0, 1.2);
+    
+    const extrudeSettings = {
+        depth: 0.3,
+        bevelEnabled: true,
+        bevelThickness: 0.1,
+        bevelSize: 0.05,
+        bevelSegments: 3
+    };
+    
+    const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+    geometry.center();
+    geometry.scale(1.5, 1.5, 1.5);
+    
+    return geometry;
+}
+
+/**
+ * Dodecahedron (Abundance) - 12-faced sacred geometry
+ */
+function createDodecahedron() {
+    const geometry = new THREE.DodecahedronGeometry(1.2, 0);
     return geometry;
 }
 

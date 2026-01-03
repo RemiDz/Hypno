@@ -46,8 +46,14 @@ export class CosmicScene {
             up: false,
             down: false
         };
-        this.moveSpeed = 50; // Units per second
+        this.moveSpeed = 120; // Units per second (increased for easier navigation)
         this.joystickInput = null; // For mobile joystick
+        
+        // Gyroscope controls
+        this.gyroscopeEnabled = false;
+        this.gyroscopeInput = null;
+        this.deviceOrientation = { alpha: 0, beta: 0, gamma: 0 };
+        this.gyroscopeCalibration = null;
     }
     
     async init() {
@@ -248,6 +254,9 @@ export class CosmicScene {
         
         // Mobile joystick
         this.initMobileJoystick();
+        
+        // Initialize gyroscope button handler
+        this.initGyroscopeButton();
     }
     
     initMobileJoystick() {
@@ -329,6 +338,121 @@ export class CosmicScene {
         document.addEventListener('mouseup', handleEnd);
     }
     
+    initGyroscopeButton() {
+        const gyroBtn = document.getElementById('gyroscope-btn');
+        if (!gyroBtn) return;
+        
+        gyroBtn.addEventListener('click', () => this.toggleGyroscope());
+    }
+    
+    async toggleGyroscope() {
+        const gyroBtn = document.getElementById('gyroscope-btn');
+        
+        if (this.gyroscopeEnabled) {
+            // Disable gyroscope
+            this.disableGyroscope();
+            if (gyroBtn) {
+                gyroBtn.classList.remove('active');
+                gyroBtn.textContent = '🔄 Enable Gyroscope';
+            }
+        } else {
+            // Enable gyroscope
+            const success = await this.enableGyroscope();
+            if (success && gyroBtn) {
+                gyroBtn.classList.add('active');
+                gyroBtn.textContent = '🔄 Disable Gyroscope';
+            }
+        }
+    }
+    
+    async enableGyroscope() {
+        // Check if DeviceOrientationEvent is available
+        if (!window.DeviceOrientationEvent) {
+            alert('Gyroscope not supported on this device');
+            return false;
+        }
+        
+        // Request permission on iOS 13+
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+                const permission = await DeviceOrientationEvent.requestPermission();
+                if (permission !== 'granted') {
+                    alert('Gyroscope permission denied');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Gyroscope permission error:', error);
+                alert('Could not access gyroscope');
+                return false;
+            }
+        }
+        
+        // Add event listener
+        window.addEventListener('deviceorientation', this.onDeviceOrientation.bind(this), true);
+        
+        // Calibrate on first reading
+        this.gyroscopeCalibration = null;
+        this.gyroscopeEnabled = true;
+        this.controls.autoRotate = false;
+        
+        console.log('🌌 Gyroscope enabled');
+        return true;
+    }
+    
+    disableGyroscope() {
+        window.removeEventListener('deviceorientation', this.onDeviceOrientation.bind(this), true);
+        this.gyroscopeEnabled = false;
+        this.gyroscopeInput = null;
+        this.gyroscopeCalibration = null;
+        console.log('🌌 Gyroscope disabled');
+    }
+    
+    onDeviceOrientation(event) {
+        if (!this.gyroscopeEnabled) return;
+        
+        const { alpha, beta, gamma } = event;
+        
+        // Calibrate on first reading (set current orientation as "neutral")
+        if (!this.gyroscopeCalibration) {
+            this.gyroscopeCalibration = { alpha, beta, gamma };
+            console.log('🌌 Gyroscope calibrated:', this.gyroscopeCalibration);
+            return;
+        }
+        
+        // Calculate relative orientation from calibration
+        // Beta: front-to-back tilt (-180 to 180), positive = tilted forward
+        // Gamma: left-to-right tilt (-90 to 90), positive = tilted right
+        
+        const relativeBeta = beta - this.gyroscopeCalibration.beta;
+        const relativeGamma = gamma - this.gyroscopeCalibration.gamma;
+        
+        // Dead zone (ignore small movements)
+        const deadZone = 5;
+        
+        // Normalize to -1 to 1 range with sensitivity
+        const sensitivity = 30; // Degrees for full movement
+        
+        let moveX = 0;
+        let moveZ = 0;
+        
+        // Forward/backward (beta - tilting phone up/down)
+        if (Math.abs(relativeBeta) > deadZone) {
+            moveZ = Math.max(-1, Math.min(1, relativeBeta / sensitivity));
+        }
+        
+        // Left/right (gamma - tilting phone left/right)
+        if (Math.abs(relativeGamma) > deadZone) {
+            moveX = Math.max(-1, Math.min(1, relativeGamma / sensitivity));
+        }
+        
+        // Only set input if there's meaningful movement
+        if (Math.abs(moveX) > 0.1 || Math.abs(moveZ) > 0.1) {
+            this.gyroscopeInput = { x: moveX, z: moveZ };
+        } else {
+            this.gyroscopeInput = null;
+        }
+    }
+    
     onKeyDown(event) {
         // Ignore if typing in input
         if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
@@ -402,7 +526,7 @@ export class CosmicScene {
     updateMovement(delta) {
         if (!this.selfShape) return;
         
-        const isMoving = Object.values(this.moveState).some(v => v) || this.joystickInput;
+        const isMoving = Object.values(this.moveState).some(v => v) || this.joystickInput || this.gyroscopeInput;
         if (!isMoving) return;
         
         // Get camera direction (ignoring Y for horizontal movement)
@@ -419,8 +543,15 @@ export class CosmicScene {
         const movement = new THREE.Vector3();
         const speed = this.moveSpeed * delta;
         
+        // Use gyroscope input for tilt-based movement
+        if (this.gyroscopeInput && this.gyroscopeEnabled) {
+            // Forward/backward based on beta (phone tilt forward/back)
+            movement.add(cameraDirection.clone().multiplyScalar(-this.gyroscopeInput.z * speed));
+            // Left/right based on gamma (phone tilt left/right)
+            movement.add(rightVector.clone().multiplyScalar(this.gyroscopeInput.x * speed));
+        }
         // Use joystick input for smooth analog movement on mobile
-        if (this.joystickInput) {
+        else if (this.joystickInput) {
             // Forward/backward based on joystick Y (inverted)
             movement.add(cameraDirection.clone().multiplyScalar(-this.joystickInput.y * speed));
             // Left/right based on joystick X

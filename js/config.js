@@ -13,7 +13,7 @@ export const firebaseConfig = {
     appId: "1:55958423638:web:6df5e7afe75124488b93f7"
 };
 
-// Intentions - defines shapes and colors
+// Intentions - defines shapes and colors (15 total)
 export const INTENTIONS = {
     observer: {
         shape: 'orbit',
@@ -84,10 +84,46 @@ export const INTENTIONS = {
         colorHex: 0xFBBF24,
         icon: '∞',
         description: 'Connecting all as one'
+    },
+    // NEW INTENTIONS
+    dream: {
+        shape: 'cloud',
+        color: '#C4B5FD',
+        colorHex: 0xC4B5FD,
+        icon: '☁',
+        description: 'Floating in imagination'
+    },
+    strength: {
+        shape: 'cube',
+        color: '#DC2626',
+        colorHex: 0xDC2626,
+        icon: '▣',
+        description: 'Building inner power'
+    },
+    flow: {
+        shape: 'wave',
+        color: '#0EA5E9',
+        colorHex: 0x0EA5E9,
+        icon: '〰',
+        description: 'Moving with life\'s current'
+    },
+    protection: {
+        shape: 'shield',
+        color: '#65A30D',
+        colorHex: 0x65A30D,
+        icon: '🛡',
+        description: 'Creating sacred space'
+    },
+    abundance: {
+        shape: 'dodecahedron',
+        color: '#D97706',
+        colorHex: 0xD97706,
+        icon: '◈',
+        description: 'Attracting prosperity'
     }
 };
 
-// Emotions - defines visual effects
+// Emotions - defines visual effects (15 total)
 export const EMOTIONS = {
     neutral: {
         effect: 'none',
@@ -168,6 +204,47 @@ export const EMOTIONS = {
         pulseSpeed: 0.5,
         icon: '💭',
         description: 'Deep in thought'
+    },
+    // NEW EMOTIONS
+    loving: {
+        effect: 'hearts',
+        particleColor: '#F472B6',
+        particleColorHex: 0xF472B6,
+        pulseSpeed: 0.9,
+        icon: '💕',
+        description: 'Overflowing with love'
+    },
+    excited: {
+        effect: 'fireworks',
+        particleColor: '#F97316',
+        particleColorHex: 0xF97316,
+        pulseSpeed: 1.6,
+        icon: '🎉',
+        description: 'Bubbling with excitement'
+    },
+    serene: {
+        effect: 'aurora',
+        particleColor: '#22D3EE',
+        particleColorHex: 0x22D3EE,
+        pulseSpeed: 0.4,
+        icon: '🌊',
+        description: 'Calm like still water'
+    },
+    inspired: {
+        effect: 'stardust',
+        particleColor: '#E879F9',
+        particleColorHex: 0xE879F9,
+        pulseSpeed: 1.4,
+        icon: '✨',
+        description: 'Touched by inspiration'
+    },
+    determined: {
+        effect: 'flames',
+        particleColor: '#EF4444',
+        particleColorHex: 0xEF4444,
+        pulseSpeed: 1.5,
+        icon: '🔥',
+        description: 'Burning with purpose'
     }
 };
 
