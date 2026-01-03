@@ -1,5 +1,6 @@
 /* ============================================
    HYPNO - Sacred Geometry & Binaural Beats
+   Beautiful, authentic sacred geometric patterns
    ============================================ */
 
 import { INTENTIONS } from './config.js';
@@ -23,8 +24,11 @@ const INTENTION_FREQUENCIES = {
     abundance: { base: 888, beat: 8 }     // Alpha waves - prosperity
 };
 
+// Golden ratio
+const PHI = 1.618033988749895;
+
 /**
- * Sacred Geometry Group - Manages the 3D visualization and audio
+ * Sacred Geometry Group - Beautiful, authentic sacred geometry
  */
 export class SacredGeometryGroup {
     constructor(geometryId, geometryData, scene) {
@@ -34,10 +38,10 @@ export class SacredGeometryGroup {
         this.threeScene = scene.scene;
         
         this.group = new THREE.Group();
-        this.geometryMesh = null;
-        this.outerGlow = null;
+        this.layers = []; // Multiple layers of geometry
         this.particles = null;
-        this.memberPositions = new Map();
+        this.innerGlow = null;
+        this.outerRings = [];
         
         // Audio
         this.audioContext = null;
@@ -47,9 +51,8 @@ export class SacredGeometryGroup {
         this.masterGain = null;
         
         // Animation
-        this.rotationSpeed = 0.0005;
+        this.rotationSpeed = 0.0003;
         this.pulsePhase = Math.random() * Math.PI * 2;
-        this.complexity = 2; // Will be set based on members
         
         this.init();
     }
@@ -64,84 +67,14 @@ export class SacredGeometryGroup {
             );
         }
         
-        // Calculate complexity based on members
-        const memberCount = Object.keys(this.data.members || {}).length;
-        this.complexity = Math.min(memberCount + 1, 8);
-        
         // Create the sacred geometry
-        this.createGeometry();
+        this.createSacredPattern();
         
         // Add to scene
         this.threeScene.add(this.group);
         
         // Animate entry
         this.animateEntry();
-    }
-    
-    createGeometry() {
-        // Use the seed for unique but deterministic generation
-        const seed = this.data.seed || Math.random() * 10000;
-        const random = this.seededRandom(seed);
-        
-        const memberCount = Object.keys(this.data.members || {}).length;
-        
-        // Choose geometry type based on seed and member count
-        const geometryTypes = [
-            () => this.createMerkaba(random, memberCount),
-            () => this.createFlowerOfLife(random, memberCount),
-            () => this.createMetatronsCube(random, memberCount),
-            () => this.createSriYantra(random, memberCount),
-            () => this.createTorusKnot(random, memberCount),
-            () => this.createPlatonicNested(random, memberCount)
-        ];
-        
-        const typeIndex = Math.floor(random() * geometryTypes.length);
-        const geometry = geometryTypes[typeIndex]();
-        
-        // Get colors from member intentions
-        const colors = this.getMemberColors();
-        const primaryColor = colors[0] || 0x8B5CF6;
-        const secondaryColor = colors[1] || 0xEC4899;
-        
-        // Create material with gradient effect
-        const material = new THREE.MeshStandardMaterial({
-            color: primaryColor,
-            emissive: primaryColor,
-            emissiveIntensity: 0.4,
-            metalness: 0.5,
-            roughness: 0.3,
-            transparent: true,
-            opacity: 0.8,
-            side: THREE.DoubleSide
-        });
-        
-        this.geometryMesh = new THREE.Mesh(geometry, material);
-        this.geometryMesh.scale.setScalar(15 + memberCount * 5);
-        this.group.add(this.geometryMesh);
-        
-        // Create outer glow
-        const glowMaterial = new THREE.MeshBasicMaterial({
-            color: secondaryColor,
-            transparent: true,
-            opacity: 0.1,
-            side: THREE.BackSide,
-            blending: THREE.AdditiveBlending
-        });
-        
-        this.outerGlow = new THREE.Mesh(geometry.clone(), glowMaterial);
-        this.outerGlow.scale.setScalar((15 + memberCount * 5) * 1.2);
-        this.group.add(this.outerGlow);
-        
-        // Create particles around geometry
-        this.createParticles(colors);
-    }
-    
-    seededRandom(seed) {
-        let s = seed;
-        return function() {
-            s = Math.sin(s * 9999) * 10000;
-            return s - Math.floor(s);
-        };
     }
     
     getMemberColors() {
@@ -154,245 +87,698 @@ export class SacredGeometryGroup {
             }
         });
         
-        return colors.length > 0 ? colors : [0x8B5CF6];
+        return colors.length > 0 ? colors : [0x8B5CF6, 0xEC4899];
     }
     
-    // Sacred Geometry Shapes
-    
-    createMerkaba(random, memberCount) {
-        // Two interlocking tetrahedra
-        const geometry = new THREE.BufferGeometry();
-        const vertices = [];
-        const indices = [];
-        
-        const size = 1;
-        const rotation = random() * Math.PI;
-        
-        // First tetrahedron (pointing up)
-        const tet1 = [
-            [0, size, 0],
-            [size * 0.943, -size * 0.333, 0],
-            [-size * 0.471, -size * 0.333, size * 0.816],
-            [-size * 0.471, -size * 0.333, -size * 0.816]
-        ];
-        
-        // Second tetrahedron (pointing down, rotated)
-        const tet2 = tet1.map(v => [-v[0], -v[1], v[2]]);
-        
-        // Add vertices
-        [...tet1, ...tet2].forEach(v => {
-            const x = v[0] * Math.cos(rotation) - v[2] * Math.sin(rotation);
-            const z = v[0] * Math.sin(rotation) + v[2] * Math.cos(rotation);
-            vertices.push(x, v[1], z);
-        });
-        
-        // Add faces for both tetrahedra
-        const faces = [
-            [0, 1, 2], [0, 2, 3], [0, 3, 1], [1, 3, 2],
-            [4, 6, 5], [4, 7, 6], [4, 5, 7], [5, 6, 7]
-        ];
-        
-        faces.forEach(face => indices.push(...face));
-        
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-        geometry.setIndex(indices);
-        geometry.computeVertexNormals();
-        
-        return geometry;
-    }
-    
-    createFlowerOfLife(random, memberCount) {
-        // Overlapping circles forming the flower of life pattern
-        const geometry = new THREE.BufferGeometry();
-        const vertices = [];
-        const indices = [];
-        
-        const layers = Math.min(2 + memberCount, 4);
-        const circleSegments = 32;
-        const radius = 0.3;
-        
-        // Create circles in hexagonal pattern
-        const circles = [[0, 0]];
-        
-        for (let layer = 1; layer <= layers; layer++) {
-            for (let i = 0; i < 6 * layer; i++) {
-                const angle = (i / (6 * layer)) * Math.PI * 2;
-                const dist = layer * radius * 2 * 0.866;
-                circles.push([
-                    Math.cos(angle) * dist,
-                    Math.sin(angle) * dist
-                ]);
-            }
-        }
-        
-        // Create torus for each circle position
-        const torusGeometry = new THREE.TorusGeometry(radius, 0.03, 8, circleSegments);
-        const mergedGeometry = new THREE.BufferGeometry();
-        
-        circles.slice(0, 7 + memberCount * 3).forEach(([cx, cy], idx) => {
-            const torus = torusGeometry.clone();
-            torus.rotateX(Math.PI / 2);
-            torus.translate(cx, 0, cy);
-            
-            // Merge into main geometry
-            const positions = torus.attributes.position.array;
-            for (let i = 0; i < positions.length; i += 3) {
-                vertices.push(positions[i], positions[i + 1], positions[i + 2]);
-            }
-            
-            const torusIndices = torus.index.array;
-            const offset = idx * (torusGeometry.attributes.position.count);
-            for (let i = 0; i < torusIndices.length; i++) {
-                indices.push(torusIndices[i] + offset);
-            }
-        });
-        
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-        geometry.setIndex(indices);
-        geometry.computeVertexNormals();
-        geometry.scale(2, 2, 2);
-        
-        return geometry;
-    }
-    
-    createMetatronsCube(random, memberCount) {
-        // 13 circles connected by lines - using icosahedron as base
-        const geometry = new THREE.IcosahedronGeometry(1, memberCount > 4 ? 1 : 0);
-        
-        // Add connecting lines
-        const wireframe = new THREE.WireframeGeometry(geometry);
-        
-        return geometry;
-    }
-    
-    createSriYantra(random, memberCount) {
-        // Interlocking triangles forming Sri Yantra
-        const geometry = new THREE.BufferGeometry();
-        const vertices = [];
-        const indices = [];
-        
-        const layers = 4 + Math.floor(memberCount / 2);
-        
-        for (let layer = 0; layer < layers; layer++) {
-            const scale = 1 - layer * 0.15;
-            const rotation = layer * Math.PI / layers + random() * 0.1;
-            const points = 3 + Math.floor(layer / 2);
-            const isInverted = layer % 2 === 1;
-            
-            const baseIdx = vertices.length / 3;
-            
-            // Create polygon
-            for (let i = 0; i < points; i++) {
-                const angle = (i / points) * Math.PI * 2 + rotation;
-                const y = isInverted ? -0.1 * layer : 0.1 * layer;
-                
-                vertices.push(
-                    Math.cos(angle) * scale,
-                    y,
-                    Math.sin(angle) * scale
-                );
-            }
-            
-            // Add center
-            vertices.push(0, isInverted ? -0.1 * layer : 0.1 * layer, 0);
-            const centerIdx = vertices.length / 3 - 1;
-            
-            // Create triangles
-            for (let i = 0; i < points; i++) {
-                indices.push(
-                    baseIdx + i,
-                    baseIdx + ((i + 1) % points),
-                    centerIdx
-                );
-            }
-        }
-        
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-        geometry.setIndex(indices);
-        geometry.computeVertexNormals();
-        
-        return geometry;
-    }
-    
-    createTorusKnot(random, memberCount) {
-        // Complex torus knot - more complex with more members
-        const p = 2 + Math.floor(random() * 3);
-        const q = 3 + Math.floor(random() * 4);
-        
-        return new THREE.TorusKnotGeometry(
-            0.6,
-            0.15,
-            64 + memberCount * 16,
-            8 + memberCount * 2,
-            p,
-            q
-        );
-    }
-    
-    createPlatonicNested(random, memberCount) {
-        // Nested platonic solids
-        const geometries = [
-            new THREE.TetrahedronGeometry(0.5, 0),
-            new THREE.OctahedronGeometry(0.7, 0),
-            new THREE.IcosahedronGeometry(0.9, 0),
-            new THREE.DodecahedronGeometry(1.1, 0)
-        ];
-        
-        // Combine based on member count
-        const useCount = Math.min(memberCount, geometries.length);
-        const combined = new THREE.BufferGeometry();
-        const vertices = [];
-        const indices = [];
-        
-        for (let i = 0; i < useCount; i++) {
-            const geo = geometries[i];
-            const rotation = i * Math.PI / 6;
-            
-            const positions = geo.attributes.position.array;
-            const geoIndices = geo.index ? geo.index.array : [];
-            const offset = vertices.length / 3;
-            
-            for (let j = 0; j < positions.length; j += 3) {
-                const x = positions[j];
-                const y = positions[j + 1];
-                const z = positions[j + 2];
-                
-                // Rotate
-                const rx = x * Math.cos(rotation) - z * Math.sin(rotation);
-                const rz = x * Math.sin(rotation) + z * Math.cos(rotation);
-                
-                vertices.push(rx, y, rz);
-            }
-            
-            for (let j = 0; j < geoIndices.length; j++) {
-                indices.push(geoIndices[j] + offset);
-            }
-        }
-        
-        combined.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-        combined.setIndex(indices);
-        combined.computeVertexNormals();
-        
-        return combined;
-    }
-    
-    createParticles(colors) {
+    createSacredPattern() {
+        const seed = this.data.seed || Math.random() * 10000;
+        const random = this.seededRandom(seed);
         const memberCount = Object.keys(this.data.members || {}).length;
-        const particleCount = 100 + memberCount * 50;
+        const colors = this.getMemberColors();
+        const primaryColor = colors[0];
+        const secondaryColor = colors[1] || colors[0];
+        
+        // Choose pattern type based on seed
+        const patternTypes = [
+            () => this.createFlowerOfLife(memberCount, colors),
+            () => this.createMetatronsCube(memberCount, colors),
+            () => this.createSeedOfLife(memberCount, colors),
+            () => this.createSriYantra(memberCount, colors),
+            () => this.createGoldenSpiral(memberCount, colors),
+            () => this.createMerkaba(memberCount, colors)
+        ];
+        
+        const typeIndex = Math.floor(random() * patternTypes.length);
+        patternTypes[typeIndex]();
+        
+        // Add central glow sphere
+        this.createCentralGlow(primaryColor);
+        
+        // Add outer decorative rings
+        this.createOuterRings(colors);
+        
+        // Add ethereal particles
+        this.createEtherealParticles(colors);
+        
+        // Scale the whole group
+        const scale = 1.5 + memberCount * 0.3;
+        this.group.scale.setScalar(scale);
+    }
+    
+    seededRandom(seed) {
+        let s = seed;
+        return function() {
+            s = Math.sin(s * 9999) * 10000;
+            return s - Math.floor(s);
+        };
+    }
+    
+    // ========================
+    // Sacred Patterns
+    // ========================
+    
+    createFlowerOfLife(memberCount, colors) {
+        const circleCount = 7 + memberCount * 6; // 7, 13, 19, etc.
+        const radius = 8;
+        const lineWidth = 0.15;
+        
+        // Central circle
+        this.addCircle(0, 0, radius, colors[0], lineWidth);
+        
+        // First ring of 6 circles
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+            this.addCircle(x, y, radius, colors[i % colors.length], lineWidth);
+        }
+        
+        // Additional rings for more members
+        if (circleCount > 7) {
+            // Second layer
+            for (let i = 0; i < 6; i++) {
+                const angle = (i / 6) * Math.PI * 2 + Math.PI / 6;
+                const x = Math.cos(angle) * radius * 1.732;
+                const y = Math.sin(angle) * radius * 1.732;
+                this.addCircle(x, y, radius, colors[(i + 1) % colors.length], lineWidth * 0.8);
+            }
+            
+            for (let i = 0; i < 6; i++) {
+                const angle = (i / 6) * Math.PI * 2;
+                const x = Math.cos(angle) * radius * 2;
+                const y = Math.sin(angle) * radius * 2;
+                this.addCircle(x, y, radius, colors[i % colors.length], lineWidth * 0.8);
+            }
+        }
+        
+        if (circleCount > 19) {
+            // Third layer for 3+ members
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI * 2;
+                const dist = radius * 2.65;
+                const x = Math.cos(angle) * dist;
+                const y = Math.sin(angle) * dist;
+                this.addCircle(x, y, radius, colors[i % colors.length], lineWidth * 0.6);
+            }
+        }
+        
+        // Add outer containing circle
+        this.addCircle(0, 0, radius * 3.5, colors[0], lineWidth * 0.4, true);
+    }
+    
+    createSeedOfLife(memberCount, colors) {
+        const radius = 10;
+        const lineWidth = 0.2;
+        
+        // Central circle
+        this.addCircle(0, 0, radius, colors[0], lineWidth);
+        
+        // 6 surrounding circles
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+            this.addCircle(x, y, radius, colors[i % colors.length], lineWidth);
+        }
+        
+        // Outer containing circle
+        this.addCircle(0, 0, radius * 2, colors[0], lineWidth * 0.5, true);
+        
+        // Add vesica piscis highlights (intersections)
+        this.addVesicaPiscis(radius, colors);
+    }
+    
+    createMetatronsCube(memberCount, colors) {
+        const size = 15;
+        
+        // 13 circles of Fruit of Life
+        const positions = [
+            [0, 0], // Center
+        ];
+        
+        // Inner ring of 6
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            positions.push([
+                Math.cos(angle) * size * 0.5,
+                Math.sin(angle) * size * 0.5
+            ]);
+        }
+        
+        // Outer ring of 6
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2 + Math.PI / 6;
+            positions.push([
+                Math.cos(angle) * size,
+                Math.sin(angle) * size
+            ]);
+        }
+        
+        // Draw circles at each position
+        positions.forEach(([x, y], i) => {
+            this.addCircle(x, y, 3, colors[i % colors.length], 0.15);
+        });
+        
+        // Connect all circles with lines (Metatron's Cube)
+        this.connectAllPoints(positions, colors[0], 0.08);
+        
+        // Outer hexagram
+        this.addHexagram(0, 0, size * 1.3, colors[1] || colors[0], 0.12);
+    }
+    
+    createSriYantra(memberCount, colors) {
+        const size = 20;
+        
+        // Outer square (Bhupura)
+        this.addSquareFrame(0, 0, size * 1.5, colors[0], 0.15);
+        
+        // Outer circle
+        this.addCircle(0, 0, size * 1.2, colors[0], 0.12, true);
+        
+        // Lotus petals (16 outer, 8 inner)
+        this.addLotusPetals(0, 0, size, 16, colors[1] || colors[0], 0.1);
+        this.addLotusPetals(0, 0, size * 0.7, 8, colors[0], 0.1);
+        
+        // 9 interlocking triangles
+        this.addSriYantraTriangles(0, 0, size * 0.5, colors);
+        
+        // Central bindu (point)
+        this.addCentralBindu(colors[0]);
+    }
+    
+    createGoldenSpiral(memberCount, colors) {
+        const spiralCount = 2 + memberCount;
+        
+        // Create multiple golden spirals
+        for (let s = 0; s < spiralCount; s++) {
+            const rotation = (s / spiralCount) * Math.PI * 2;
+            this.addGoldenSpiral(rotation, colors[s % colors.length], 0.12);
+        }
+        
+        // Add golden rectangles
+        this.addGoldenRectangles(colors[0], 0.08);
+        
+        // Outer circle
+        this.addCircle(0, 0, 25, colors[0], 0.1, true);
+    }
+    
+    createMerkaba(memberCount, colors) {
+        const size = 15;
+        
+        // Two interlocking tetrahedra form the 3D Merkaba
+        // We'll show the 2D projection - Star of David with depth
+        
+        // Upward triangle
+        this.addTriangle(0, 0, size, true, colors[0], 0.2);
+        
+        // Downward triangle
+        this.addTriangle(0, 0, size, false, colors[1] || colors[0], 0.2);
+        
+        // Inner triangles (smaller, offset in Z)
+        const innerSize = size * 0.6;
+        this.addTriangle(0, 0, innerSize, true, colors[0], 0.15, 2);
+        this.addTriangle(0, 0, innerSize, false, colors[1] || colors[0], 0.15, -2);
+        
+        // Central hexagon
+        this.addHexagon(0, 0, size * 0.35, colors[0], 0.1);
+        
+        // Outer circle
+        this.addCircle(0, 0, size * 1.3, colors[0], 0.1, true);
+    }
+    
+    // ========================
+    // Geometry Helpers
+    // ========================
+    
+    addCircle(x, y, radius, color, lineWidth, isDashed = false) {
+        const segments = 128;
+        const points = [];
+        
+        for (let i = 0; i <= segments; i++) {
+            const angle = (i / segments) * Math.PI * 2;
+            points.push(new THREE.Vector3(
+                x + Math.cos(angle) * radius,
+                y + Math.sin(angle) * radius,
+                0
+            ));
+        }
+        
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        
+        let material;
+        if (isDashed) {
+            material = new THREE.LineDashedMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.6,
+                dashSize: 1,
+                gapSize: 0.5,
+                linewidth: lineWidth
+            });
+        } else {
+            material = new THREE.LineBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.8,
+                linewidth: lineWidth
+            });
+        }
+        
+        const circle = new THREE.Line(geometry, material);
+        if (isDashed) {
+            circle.computeLineDistances();
+        }
+        
+        this.group.add(circle);
+        this.layers.push(circle);
+        
+        // Add glow effect
+        this.addLineGlow(points, color, radius * 0.05);
+    }
+    
+    addLineGlow(points, color, intensity) {
+        const glowGeometry = new THREE.BufferGeometry().setFromPoints(points);
+        const glowMaterial = new THREE.LineBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.2,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const glow = new THREE.Line(glowGeometry, glowMaterial);
+        glow.scale.setScalar(1.02);
+        this.group.add(glow);
+        this.layers.push(glow);
+    }
+    
+    addTriangle(x, y, size, pointUp, color, lineWidth, zOffset = 0) {
+        const points = [];
+        const direction = pointUp ? 1 : -1;
+        const height = size * Math.sqrt(3) / 2;
+        
+        // Three vertices
+        points.push(new THREE.Vector3(x, y + height * 0.67 * direction, zOffset));
+        points.push(new THREE.Vector3(x - size / 2, y - height * 0.33 * direction, zOffset));
+        points.push(new THREE.Vector3(x + size / 2, y - height * 0.33 * direction, zOffset));
+        points.push(points[0].clone()); // Close the triangle
+        
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const material = new THREE.LineBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.9,
+            linewidth: lineWidth
+        });
+        
+        const triangle = new THREE.Line(geometry, material);
+        this.group.add(triangle);
+        this.layers.push(triangle);
+        
+        // Add fill with low opacity
+        const fillGeometry = new THREE.BufferGeometry();
+        const vertices = new Float32Array([
+            points[0].x, points[0].y, points[0].z,
+            points[1].x, points[1].y, points[1].z,
+            points[2].x, points[2].y, points[2].z
+        ]);
+        fillGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        
+        const fillMaterial = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.1,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const fill = new THREE.Mesh(fillGeometry, fillMaterial);
+        this.group.add(fill);
+        this.layers.push(fill);
+    }
+    
+    addHexagon(x, y, size, color, lineWidth) {
+        const points = [];
+        
+        for (let i = 0; i <= 6; i++) {
+            const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+            points.push(new THREE.Vector3(
+                x + Math.cos(angle) * size,
+                y + Math.sin(angle) * size,
+                0
+            ));
+        }
+        
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const material = new THREE.LineBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.8,
+            linewidth: lineWidth
+        });
+        
+        const hexagon = new THREE.Line(geometry, material);
+        this.group.add(hexagon);
+        this.layers.push(hexagon);
+    }
+    
+    addHexagram(x, y, size, color, lineWidth) {
+        // Star of David - two overlapping triangles
+        this.addTriangle(x, y, size, true, color, lineWidth);
+        this.addTriangle(x, y, size, false, color, lineWidth);
+    }
+    
+    addSquareFrame(x, y, size, color, lineWidth) {
+        const halfSize = size / 2;
+        const points = [
+            new THREE.Vector3(x - halfSize, y - halfSize, 0),
+            new THREE.Vector3(x + halfSize, y - halfSize, 0),
+            new THREE.Vector3(x + halfSize, y + halfSize, 0),
+            new THREE.Vector3(x - halfSize, y + halfSize, 0),
+            new THREE.Vector3(x - halfSize, y - halfSize, 0)
+        ];
+        
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const material = new THREE.LineBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.7,
+            linewidth: lineWidth
+        });
+        
+        const square = new THREE.Line(geometry, material);
+        this.group.add(square);
+        this.layers.push(square);
+        
+        // Gate openings (T-shapes on each side)
+        this.addGateOpening(x, y - halfSize, size * 0.15, 0, color, lineWidth);
+        this.addGateOpening(x, y + halfSize, size * 0.15, Math.PI, color, lineWidth);
+        this.addGateOpening(x - halfSize, y, size * 0.15, Math.PI / 2, color, lineWidth);
+        this.addGateOpening(x + halfSize, y, size * 0.15, -Math.PI / 2, color, lineWidth);
+    }
+    
+    addGateOpening(x, y, size, rotation, color, lineWidth) {
+        const points = [
+            new THREE.Vector3(-size, 0, 0),
+            new THREE.Vector3(-size, size, 0),
+            new THREE.Vector3(-size * 0.3, size, 0),
+            new THREE.Vector3(-size * 0.3, size * 0.4, 0),
+            new THREE.Vector3(size * 0.3, size * 0.4, 0),
+            new THREE.Vector3(size * 0.3, size, 0),
+            new THREE.Vector3(size, size, 0),
+            new THREE.Vector3(size, 0, 0)
+        ];
+        
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const material = new THREE.LineBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.6,
+            linewidth: lineWidth
+        });
+        
+        const gate = new THREE.Line(geometry, material);
+        gate.position.set(x, y, 0);
+        gate.rotation.z = rotation;
+        this.group.add(gate);
+        this.layers.push(gate);
+    }
+    
+    addLotusPetals(x, y, radius, petalCount, color, lineWidth) {
+        for (let i = 0; i < petalCount; i++) {
+            const angle = (i / petalCount) * Math.PI * 2;
+            this.addPetal(x, y, radius, angle, color, lineWidth);
+        }
+    }
+    
+    addPetal(cx, cy, radius, angle, color, lineWidth) {
+        const points = [];
+        const petalLength = radius * 0.25;
+        const petalWidth = Math.PI / 16;
+        
+        // Petal shape using bezier-like curve
+        const segments = 20;
+        for (let i = 0; i <= segments; i++) {
+            const t = i / segments;
+            const petalAngle = angle - petalWidth + t * petalWidth * 2;
+            const r = radius + Math.sin(t * Math.PI) * petalLength;
+            
+            points.push(new THREE.Vector3(
+                cx + Math.cos(petalAngle) * r,
+                cy + Math.sin(petalAngle) * r,
+                0
+            ));
+        }
+        
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const material = new THREE.LineBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.6,
+            linewidth: lineWidth
+        });
+        
+        const petal = new THREE.Line(geometry, material);
+        this.group.add(petal);
+        this.layers.push(petal);
+    }
+    
+    addSriYantraTriangles(x, y, size, colors) {
+        // Simplified Sri Yantra - 4 upward + 5 downward triangles
+        const upScales = [1, 0.75, 0.5, 0.25];
+        const downScales = [0.9, 0.65, 0.45, 0.3, 0.15];
+        
+        upScales.forEach((scale, i) => {
+            this.addTriangle(x, y, size * scale, true, colors[i % colors.length], 0.12);
+        });
+        
+        downScales.forEach((scale, i) => {
+            this.addTriangle(x, y, size * scale, false, colors[(i + 1) % colors.length], 0.12);
+        });
+    }
+    
+    addCentralBindu(color) {
+        // Central point/sphere
+        const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+        const material = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.9
+        });
+        
+        const bindu = new THREE.Mesh(geometry, material);
+        this.group.add(bindu);
+        this.layers.push(bindu);
+        
+        // Glow around bindu
+        const glowGeometry = new THREE.SphereGeometry(1.5, 32, 32);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.3,
+            blending: THREE.AdditiveBlending
+        });
+        
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        this.group.add(glow);
+        this.layers.push(glow);
+    }
+    
+    addGoldenSpiral(rotation, color, lineWidth) {
+        const points = [];
+        const turns = 4;
+        const segments = turns * 64;
+        
+        for (let i = 0; i <= segments; i++) {
+            const t = i / segments;
+            const angle = t * turns * Math.PI * 2 + rotation;
+            const r = Math.pow(PHI, t * turns * 2) * 0.5;
+            
+            points.push(new THREE.Vector3(
+                Math.cos(angle) * r,
+                Math.sin(angle) * r,
+                0
+            ));
+        }
+        
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const material = new THREE.LineBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.7,
+            linewidth: lineWidth
+        });
+        
+        const spiral = new THREE.Line(geometry, material);
+        this.group.add(spiral);
+        this.layers.push(spiral);
+    }
+    
+    addGoldenRectangles(color, lineWidth) {
+        // Nested golden rectangles
+        const rects = 6;
+        let w = 20;
+        let h = w / PHI;
+        let x = 0;
+        let y = 0;
+        
+        for (let i = 0; i < rects; i++) {
+            const halfW = w / 2;
+            const halfH = h / 2;
+            
+            const points = [
+                new THREE.Vector3(x - halfW, y - halfH, 0),
+                new THREE.Vector3(x + halfW, y - halfH, 0),
+                new THREE.Vector3(x + halfW, y + halfH, 0),
+                new THREE.Vector3(x - halfW, y + halfH, 0),
+                new THREE.Vector3(x - halfW, y - halfH, 0)
+            ];
+            
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.4 + (rects - i) * 0.1,
+                linewidth: lineWidth
+            });
+            
+            const rect = new THREE.Line(geometry, material);
+            this.group.add(rect);
+            this.layers.push(rect);
+            
+            // Prepare for next rectangle
+            const newW = h;
+            const newH = w - h;
+            
+            // Offset for next rectangle
+            const dir = i % 4;
+            if (dir === 0) x += (w - newW) / 2;
+            else if (dir === 1) y += (h - newH) / 2;
+            else if (dir === 2) x -= (w - newW) / 2;
+            else y -= (h - newH) / 2;
+            
+            w = newW;
+            h = newH;
+        }
+    }
+    
+    addVesicaPiscis(radius, colors) {
+        // Highlight the vesica piscis (intersections)
+        for (let i = 0; i < 6; i++) {
+            const angle1 = (i / 6) * Math.PI * 2;
+            const angle2 = ((i + 1) / 6) * Math.PI * 2;
+            
+            // Midpoint between adjacent circles
+            const mx = (Math.cos(angle1) + Math.cos(angle2)) * radius / 2;
+            const my = (Math.sin(angle1) + Math.sin(angle2)) * radius / 2;
+            
+            // Small glowing point at intersection
+            const dotGeometry = new THREE.CircleGeometry(0.3, 16);
+            const dotMaterial = new THREE.MeshBasicMaterial({
+                color: colors[i % colors.length],
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+            dot.position.set(mx, my, 0.1);
+            this.group.add(dot);
+            this.layers.push(dot);
+        }
+    }
+    
+    connectAllPoints(positions, color, lineWidth) {
+        // Draw lines connecting all points (Metatron's Cube)
+        for (let i = 0; i < positions.length; i++) {
+            for (let j = i + 1; j < positions.length; j++) {
+                const points = [
+                    new THREE.Vector3(positions[i][0], positions[i][1], 0),
+                    new THREE.Vector3(positions[j][0], positions[j][1], 0)
+                ];
+                
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                const material = new THREE.LineBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.3,
+                    linewidth: lineWidth
+                });
+                
+                const line = new THREE.Line(geometry, material);
+                this.group.add(line);
+                this.layers.push(line);
+            }
+        }
+    }
+    
+    // ========================
+    // Effects
+    // ========================
+    
+    createCentralGlow(color) {
+        // Central energy sphere
+        const geometry = new THREE.SphereGeometry(3, 32, 32);
+        const material = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true,
+            opacity: 0.15,
+            blending: THREE.AdditiveBlending
+        });
+        
+        this.innerGlow = new THREE.Mesh(geometry, material);
+        this.group.add(this.innerGlow);
+        
+        // Outer glow layers
+        for (let i = 1; i <= 3; i++) {
+            const glowGeometry = new THREE.SphereGeometry(3 + i * 2, 32, 32);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.05 / i,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            this.group.add(glow);
+        }
+    }
+    
+    createOuterRings(colors) {
+        const ringCount = 3;
+        
+        for (let i = 0; i < ringCount; i++) {
+            const radius = 30 + i * 8;
+            const geometry = new THREE.RingGeometry(radius, radius + 0.1, 128);
+            const material = new THREE.MeshBasicMaterial({
+                color: colors[i % colors.length],
+                transparent: true,
+                opacity: 0.2 - i * 0.05,
+                side: THREE.DoubleSide,
+                blending: THREE.AdditiveBlending
+            });
+            
+            const ring = new THREE.Mesh(geometry, material);
+            this.group.add(ring);
+            this.outerRings.push(ring);
+        }
+    }
+    
+    createEtherealParticles(colors) {
+        const memberCount = Object.keys(this.data.members || {}).length;
+        const particleCount = 200 + memberCount * 100;
         
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
         const colorArray = new Float32Array(particleCount * 3);
+        const sizes = new Float32Array(particleCount);
         
         for (let i = 0; i < particleCount; i++) {
-            // Distribute on sphere
+            // Distribute on disc with concentration near center
+            const r = Math.pow(Math.random(), 0.5) * 40;
             const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos(2 * Math.random() - 1);
-            const radius = 20 + memberCount * 8 + Math.random() * 10;
             
-            positions[i * 3] = Math.sin(phi) * Math.cos(theta) * radius;
-            positions[i * 3 + 1] = Math.cos(phi) * radius;
-            positions[i * 3 + 2] = Math.sin(phi) * Math.sin(theta) * radius;
+            positions[i * 3] = Math.cos(theta) * r;
+            positions[i * 3 + 1] = Math.sin(theta) * r;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 5;
             
             // Color from member intentions
             const colorHex = colors[i % colors.length];
@@ -400,17 +786,21 @@ export class SacredGeometryGroup {
             colorArray[i * 3] = color.r;
             colorArray[i * 3 + 1] = color.g;
             colorArray[i * 3 + 2] = color.b;
+            
+            sizes[i] = Math.random() * 0.5 + 0.2;
         }
         
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
         
         const material = new THREE.PointsMaterial({
-            size: 0.5,
+            size: 0.4,
             vertexColors: true,
             transparent: true,
-            opacity: 0.7,
-            blending: THREE.AdditiveBlending
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending,
+            sizeAttenuation: true
         });
         
         this.particles = new THREE.Points(geometry, material);
@@ -419,6 +809,21 @@ export class SacredGeometryGroup {
     
     animateEntry() {
         this.group.scale.setScalar(0);
+        
+        // Each layer fades in with delay
+        this.layers.forEach((layer, i) => {
+            if (layer.material) {
+                const targetOpacity = layer.material.opacity;
+                layer.material.opacity = 0;
+                
+                gsap.to(layer.material, {
+                    opacity: targetOpacity,
+                    duration: 1.5,
+                    delay: i * 0.05,
+                    ease: 'power2.out'
+                });
+            }
+        });
         
         gsap.to(this.group.scale, {
             x: 1,
@@ -429,7 +834,7 @@ export class SacredGeometryGroup {
         });
         
         gsap.from(this.group.rotation, {
-            y: Math.PI * 2,
+            z: Math.PI,
             duration: 3,
             ease: 'power2.out'
         });
@@ -445,23 +850,19 @@ export class SacredGeometryGroup {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
             
-            // Resume if suspended (iOS requirement)
             if (this.audioContext.state === 'suspended') {
                 await this.audioContext.resume();
             }
             
-            // Master gain (volume control)
             this.masterGain = this.audioContext.createGain();
-            this.masterGain.gain.value = 0.15; // Low volume
+            this.masterGain.gain.value = 0.15;
             this.masterGain.connect(this.audioContext.destination);
             
-            // Get member intentions and calculate frequencies
             const members = this.data.members || {};
             const activeMembers = Object.values(members).filter(m => !m.pending);
             
             if (activeMembers.length === 0) return;
             
-            // Calculate combined frequency from all intentions
             let totalBaseFreq = 0;
             let totalBeatFreq = 0;
             
@@ -475,7 +876,6 @@ export class SacredGeometryGroup {
             const baseFreq = totalBaseFreq / activeMembers.length;
             const beatFreq = totalBeatFreq / activeMembers.length;
             
-            // Create left and right oscillators for binaural effect
             const leftOsc = this.audioContext.createOscillator();
             const rightOsc = this.audioContext.createOscillator();
             
@@ -485,21 +885,18 @@ export class SacredGeometryGroup {
             leftOsc.frequency.value = baseFreq;
             rightOsc.frequency.value = baseFreq + beatFreq;
             
-            // Create stereo panner for each
             const leftPan = this.audioContext.createStereoPanner();
             const rightPan = this.audioContext.createStereoPanner();
             
-            leftPan.pan.value = -1; // Full left
-            rightPan.pan.value = 1;  // Full right
+            leftPan.pan.value = -1;
+            rightPan.pan.value = 1;
             
-            // Individual gains
             const leftGain = this.audioContext.createGain();
             const rightGain = this.audioContext.createGain();
             
             leftGain.gain.value = 0.5;
             rightGain.gain.value = 0.5;
             
-            // Connect
             leftOsc.connect(leftGain);
             leftGain.connect(leftPan);
             leftPan.connect(this.masterGain);
@@ -508,7 +905,6 @@ export class SacredGeometryGroup {
             rightGain.connect(rightPan);
             rightPan.connect(this.masterGain);
             
-            // Start
             leftOsc.start();
             rightOsc.start();
             
@@ -516,7 +912,6 @@ export class SacredGeometryGroup {
             this.gainNodes = [leftGain, rightGain];
             this.isAudioPlaying = true;
             
-            // Fade in
             this.masterGain.gain.setValueAtTime(0, this.audioContext.currentTime);
             this.masterGain.gain.linearRampToValueAtTime(0.15, this.audioContext.currentTime + 2);
             
@@ -530,17 +925,13 @@ export class SacredGeometryGroup {
     stopBinauralBeats() {
         if (!this.isAudioPlaying || !this.audioContext) return;
         
-        // Fade out
         if (this.masterGain) {
             this.masterGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 1);
         }
         
-        // Stop after fade
         setTimeout(() => {
             this.oscillators.forEach(osc => {
-                try {
-                    osc.stop();
-                } catch (e) {}
+                try { osc.stop(); } catch (e) {}
             });
             
             if (this.audioContext) {
@@ -565,7 +956,6 @@ export class SacredGeometryGroup {
             return;
         }
         
-        // Recalculate frequencies
         let totalBaseFreq = 0;
         let totalBeatFreq = 0;
         
@@ -579,7 +969,6 @@ export class SacredGeometryGroup {
         const baseFreq = totalBaseFreq / activeMembers.length;
         const beatFreq = totalBeatFreq / activeMembers.length;
         
-        // Smoothly transition frequencies
         const now = this.audioContext.currentTime;
         this.oscillators[0].frequency.linearRampToValueAtTime(baseFreq, now + 0.5);
         this.oscillators[1].frequency.linearRampToValueAtTime(baseFreq + beatFreq, now + 0.5);
@@ -594,7 +983,6 @@ export class SacredGeometryGroup {
         this.data = geometryData;
         const newMemberCount = Object.keys(geometryData.members || {}).length;
         
-        // If member count changed, rebuild geometry
         if (newMemberCount !== oldMemberCount) {
             this.rebuildGeometry();
             
@@ -603,7 +991,6 @@ export class SacredGeometryGroup {
             }
         }
         
-        // Update center position
         if (geometryData.center) {
             gsap.to(this.group.position, {
                 x: geometryData.center.x,
@@ -616,67 +1003,78 @@ export class SacredGeometryGroup {
     }
     
     rebuildGeometry() {
-        // Remove old geometry
-        if (this.geometryMesh) {
-            this.group.remove(this.geometryMesh);
-            this.geometryMesh.geometry.dispose();
-            this.geometryMesh.material.dispose();
-        }
+        // Remove old layers
+        this.layers.forEach(layer => {
+            this.group.remove(layer);
+            if (layer.geometry) layer.geometry.dispose();
+            if (layer.material) layer.material.dispose();
+        });
+        this.layers = [];
         
-        if (this.outerGlow) {
-            this.group.remove(this.outerGlow);
-            this.outerGlow.geometry.dispose();
-            this.outerGlow.material.dispose();
-        }
+        this.outerRings.forEach(ring => {
+            this.group.remove(ring);
+            if (ring.geometry) ring.geometry.dispose();
+            if (ring.material) ring.material.dispose();
+        });
+        this.outerRings = [];
         
         if (this.particles) {
             this.group.remove(this.particles);
             this.particles.geometry.dispose();
             this.particles.material.dispose();
+            this.particles = null;
+        }
+        
+        if (this.innerGlow) {
+            this.group.remove(this.innerGlow);
+            this.innerGlow.geometry.dispose();
+            this.innerGlow.material.dispose();
+            this.innerGlow = null;
         }
         
         // Recreate
-        this.createGeometry();
-        
-        // Animate the change
-        gsap.from(this.geometryMesh.scale, {
-            x: 0.5,
-            y: 0.5,
-            z: 0.5,
-            duration: 1,
-            ease: 'elastic.out(1, 0.5)'
-        });
+        this.createSacredPattern();
     }
     
     animate(delta, elapsed) {
-        // Rotate geometry
-        if (this.geometryMesh) {
-            this.geometryMesh.rotation.y += this.rotationSpeed;
-            this.geometryMesh.rotation.x += this.rotationSpeed * 0.3;
-        }
+        // Gentle rotation of the whole pattern
+        this.group.rotation.z += this.rotationSpeed;
         
-        if (this.outerGlow) {
-            this.outerGlow.rotation.y -= this.rotationSpeed * 0.5;
-        }
-        
-        // Pulse effect
-        const pulse = 1 + Math.sin(elapsed * 0.5 + this.pulsePhase) * 0.05;
-        if (this.geometryMesh) {
-            const baseScale = 15 + Object.keys(this.data.members || {}).length * 5;
-            this.geometryMesh.scale.setScalar(baseScale * pulse);
-        }
-        
-        // Animate particles
+        // Counter-rotate particles
         if (this.particles) {
-            this.particles.rotation.y += delta * 0.1;
+            this.particles.rotation.z -= this.rotationSpeed * 2;
             
+            // Gentle floating motion
             const positions = this.particles.geometry.attributes.position.array;
             for (let i = 0; i < positions.length; i += 3) {
-                // Gentle floating motion
-                positions[i + 1] += Math.sin(elapsed + i) * 0.01;
+                positions[i + 2] = Math.sin(elapsed * 0.5 + i) * 2;
             }
             this.particles.geometry.attributes.position.needsUpdate = true;
         }
+        
+        // Pulse outer rings
+        this.outerRings.forEach((ring, i) => {
+            const pulse = 1 + Math.sin(elapsed * 0.3 + i * 0.5) * 0.02;
+            ring.scale.setScalar(pulse);
+        });
+        
+        // Pulse inner glow
+        if (this.innerGlow) {
+            const glowPulse = 1 + Math.sin(elapsed * 0.5) * 0.1;
+            this.innerGlow.scale.setScalar(glowPulse);
+        }
+        
+        // Subtle opacity pulse on layers
+        this.layers.forEach((layer, i) => {
+            if (layer.material && layer.material.opacity !== undefined) {
+                const baseOpacity = layer.userData?.baseOpacity || layer.material.opacity;
+                if (!layer.userData) layer.userData = {};
+                layer.userData.baseOpacity = baseOpacity;
+                
+                const pulse = Math.sin(elapsed * 0.4 + i * 0.1) * 0.1;
+                layer.material.opacity = Math.max(0.05, Math.min(1, baseOpacity + pulse));
+            }
+        });
     }
     
     fadeOut(callback) {
@@ -697,23 +1095,26 @@ export class SacredGeometryGroup {
     dispose() {
         this.stopBinauralBeats();
         
-        // Remove from scene
         this.threeScene.remove(this.group);
         
-        // Dispose geometries
-        if (this.geometryMesh) {
-            this.geometryMesh.geometry.dispose();
-            this.geometryMesh.material.dispose();
-        }
+        this.layers.forEach(layer => {
+            if (layer.geometry) layer.geometry.dispose();
+            if (layer.material) layer.material.dispose();
+        });
         
-        if (this.outerGlow) {
-            this.outerGlow.geometry.dispose();
-            this.outerGlow.material.dispose();
-        }
+        this.outerRings.forEach(ring => {
+            if (ring.geometry) ring.geometry.dispose();
+            if (ring.material) ring.material.dispose();
+        });
         
         if (this.particles) {
             this.particles.geometry.dispose();
             this.particles.material.dispose();
+        }
+        
+        if (this.innerGlow) {
+            this.innerGlow.geometry.dispose();
+            this.innerGlow.material.dispose();
         }
     }
     
@@ -722,8 +1123,7 @@ export class SacredGeometryGroup {
     // ========================
     
     getMemberPosition(index, total) {
-        // Arrange members in a circle around the geometry center
-        const radius = 25 + total * 3;
+        const radius = 35 + total * 5;
         const angle = (index / total) * Math.PI * 2;
         
         return {
