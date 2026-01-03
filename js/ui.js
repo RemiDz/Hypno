@@ -357,33 +357,33 @@ export class UIManager {
             li.className = 'active-user-item' + (user.isSelf ? ' is-self' : '');
             li.dataset.userId = user.id;
             
-            // Color dot based on intention
-            const intentionColors = {
-                observer: '#E2E8F0',
-                peace: '#A78BFA',
-                love: '#F472B6',
-                clarity: '#60A5FA',
-                creativity: '#FBBF24',
-                transcendence: '#34D399',
-                transformation: '#F87171',
-                healing: '#22D3EE',
-                wisdom: '#C084FC',
-                unity: '#FCD34D'
-            };
-            const dotColor = intentionColors[user.data.intention] || '#E2E8F0';
+            // Get intention data
+            const intentionData = INTENTIONS[user.data.intention] || INTENTIONS.observer;
+            const emotionData = EMOTIONS[user.data.emotion] || EMOTIONS.neutral;
             
-            const dot = document.createElement('span');
-            dot.className = 'active-user-dot';
-            dot.style.backgroundColor = dotColor;
+            // Intention icon
+            const intentionIcon = document.createElement('span');
+            intentionIcon.className = 'active-user-intention';
+            intentionIcon.textContent = intentionData.icon || '◯';
+            intentionIcon.style.color = intentionData.color || '#E2E8F0';
+            intentionIcon.title = `Intention: ${user.data.intention || 'observer'}`;
             
+            // User name
             const name = document.createElement('span');
             name.className = 'active-user-name';
             name.textContent = user.isSelf 
                 ? `${user.data.nickname || 'Anonymous'} (You)` 
                 : (user.data.nickname || 'Anonymous');
             
-            li.appendChild(dot);
+            // Emotion icon
+            const emotionIcon = document.createElement('span');
+            emotionIcon.className = 'active-user-emotion';
+            emotionIcon.textContent = emotionData.icon || '😐';
+            emotionIcon.title = `Feeling: ${user.data.emotion || 'neutral'}`;
+            
+            li.appendChild(intentionIcon);
             li.appendChild(name);
+            li.appendChild(emotionIcon);
             
             // Click handler - navigate to user
             li.addEventListener('click', () => {
