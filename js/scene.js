@@ -751,9 +751,12 @@ export class CosmicScene {
         // Collect all clickable objects
         const clickableObjects = [];
         
-        // Add user shapes
+        // Add user shape hitboxes for reliable click detection
         this.users.forEach((userShape, userId) => {
-            if (userShape.group) {
+            if (userShape.hitbox) {
+                clickableObjects.push(userShape.hitbox);
+            } else if (userShape.group) {
+                // Fallback to group if no hitbox
                 userShape.group.userData.userId = userId;
                 clickableObjects.push(userShape.group);
             }
@@ -778,18 +781,25 @@ export class CosmicScene {
             for (const intersect of intersects) {
                 let object = intersect.object;
                 
-                // Check direct object first for sacred geometry hitbox
+                // Check direct object first for hitboxes (both user and sacred geometry)
+                if (object.userData.isUserHitbox && object.userData.userId && !userHit) {
+                    userHit = { userId: object.userData.userId, distance: intersect.distance };
+                }
+                
                 if (object.userData.isSacredGeometry && !sacredGeometryHit) {
                     sacredGeometryHit = { geometryId: object.userData.sacredGeometryId, distance: intersect.distance };
                 }
                 
-                // Walk up the parent chain to find user shapes
-                while (object) {
-                    if (object.userData.userId && !userHit) {
-                        userHit = { userId: object.userData.userId, distance: intersect.distance };
-                        break;
+                // If no user hitbox found directly, walk up the parent chain (fallback)
+                if (!userHit) {
+                    let parentObj = object.parent;
+                    while (parentObj) {
+                        if (parentObj.userData.userId) {
+                            userHit = { userId: parentObj.userData.userId, distance: intersect.distance };
+                            break;
+                        }
+                        parentObj = parentObj.parent;
                     }
-                    object = object.parent;
                 }
                 
                 // If we found a user, we can stop (users take priority)

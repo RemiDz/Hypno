@@ -19,6 +19,7 @@ export class UserShape {
         this.group = new THREE.Group();
         this.mesh = null;
         this.glowMesh = null;
+        this.hitbox = null;
         this.label = null;
         this.emotionEffect = null;
         
@@ -43,6 +44,9 @@ export class UserShape {
         
         // Create shape
         this.createShape();
+        
+        // Create clickable hitbox
+        this.createHitbox();
         
         // Create label
         this.createLabel();
@@ -85,6 +89,26 @@ export class UserShape {
         this.material = material;
         this.glowGeometry = glowGeometry;
         this.glowMaterial = glowMaterial;
+    }
+    
+    createHitbox() {
+        // Invisible sphere for reliable click detection on shape center
+        const hitboxRadius = this.baseScale * 2.5;
+        const hitboxGeometry = new THREE.SphereGeometry(hitboxRadius, 8, 8);
+        const hitboxMaterial = new THREE.MeshBasicMaterial({
+            transparent: true,
+            opacity: 0,
+            depthWrite: false
+        });
+        
+        this.hitbox = new THREE.Mesh(hitboxGeometry, hitboxMaterial);
+        this.hitbox.userData.userId = this.id;
+        this.hitbox.userData.isUserHitbox = true;
+        this.group.add(this.hitbox);
+        
+        // Store for disposal
+        this.hitboxGeometry = hitboxGeometry;
+        this.hitboxMaterial = hitboxMaterial;
     }
     
     createLabel() {
@@ -396,6 +420,14 @@ export class UserShape {
         }
         if (this.glowMesh && this.glowMesh.material) {
             this.glowMesh.material.dispose();
+        }
+        
+        // Dispose hitbox
+        if (this.hitboxGeometry) {
+            this.hitboxGeometry.dispose();
+        }
+        if (this.hitboxMaterial) {
+            this.hitboxMaterial.dispose();
         }
         
         // Dispose label
