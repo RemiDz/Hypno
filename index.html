@@ -111,6 +111,44 @@
         <span class="settings-icon">⚙️</span>
     </button>
 
+    <!-- Sacred Geometry Invite Modal -->
+    <div id="sg-invite-modal" class="modal-overlay hidden">
+        <div class="modal sg-invite-modal">
+            <div class="modal-glow"></div>
+            <div class="sg-invite-icon">✡</div>
+            <h2 class="sg-invite-title">Sacred Geometry Invitation</h2>
+            <p class="sg-invite-text"><span id="sg-invite-from">Someone</span> invites you to form a Sacred Geometry together.</p>
+            <p class="sg-invite-desc">Join to create a unique geometric pattern and experience harmonized binaural beats based on your combined intentions.</p>
+            
+            <div class="sg-invite-buttons">
+                <button class="sg-accept-btn" id="sg-accept-btn">
+                    <span>✧</span> ACCEPT <span>✧</span>
+                </button>
+                <button class="sg-decline-btn" id="sg-decline-btn">
+                    Decline
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sacred Geometry Active Panel -->
+    <div id="sg-active-panel" class="sg-active-panel hidden">
+        <div class="sg-panel-header">
+            <span class="sg-panel-icon">✡</span>
+            <span class="sg-panel-title">Sacred Geometry Active</span>
+        </div>
+        <div class="sg-panel-members" id="sg-panel-members">
+            <!-- Members will be listed here -->
+        </div>
+        <div class="sg-panel-audio">
+            <button class="sg-audio-btn" id="sg-audio-btn">
+                <span class="audio-icon">🔇</span>
+                <span class="audio-text">Enable Binaural Beats</span>
+            </button>
+        </div>
+        <button class="sg-leave-btn" id="sg-leave-btn">Leave Sacred Geometry</button>
+    </div>
+
     <!-- Settings Modal -->
     <div id="settings-menu" class="modal-overlay hidden">
         <div class="modal settings-modal">
@@ -426,6 +464,16 @@
                 </button>
                 
                 <p class="resonance-status" id="resonance-status">Currently resonating: NO</p>
+                
+                <div class="divider"></div>
+                
+                <button class="sacred-geometry-btn" id="sacred-geometry-btn">
+                    <span class="sg-icon">✡</span>
+                    <span class="sg-text">CREATE SACRED GEOMETRY</span>
+                    <span class="sg-icon">✡</span>
+                </button>
+                
+                <p class="sg-description">Form a sacred geometry with this soul. When both accept, you'll be drawn together into a unique geometric pattern with binaural beats harmonized to your intentions.</p>
             </div>
         </div>
     </div>

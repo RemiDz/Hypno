@@ -8,13 +8,15 @@ import { FirebaseSync } from './firebase.js';
 import { UIManager } from './ui.js';
 import { UserShape } from './user.js';
 import { ConnectionThread, ConnectionManager } from './connections.js';
+import { SacredGeometryManager } from './sacredGeometry.js';
 import { throttle } from './utils.js';
 
 // Make classes available globally for scene.js
 window.HypnoClasses = {
     UserShape,
     ConnectionThread,
-    ConnectionManager
+    ConnectionManager,
+    SacredGeometryManager
 };
 
 class HypnoApp {
@@ -23,10 +25,12 @@ class HypnoApp {
         this.scene = null;
         this.ui = null;
         this.connectionManager = null;
+        this.sacredGeometryManager = null;
         
         this.selfId = null;
         this.selfData = null;
         this.users = new Map();
+        this.currentSacredGeometry = null;
         
         this.isInitialized = false;
     }
@@ -51,8 +55,12 @@ class HypnoApp {
             // Initialize connection manager
             this.connectionManager = new ConnectionManager(this.scene.scene, this.scene.users);
             
+            // Initialize sacred geometry manager
+            this.sacredGeometryManager = new SacredGeometryManager(this.scene);
+            
             // Give scene a reference to connection manager for animation
             this.scene.connectionManager = this.connectionManager;
+            this.scene.sacredGeometryManager = this.sacredGeometryManager;
             
             // Setup scene callbacks
             this.scene.onUserClicked = this.onUserClicked.bind(this);
@@ -109,6 +117,323 @@ class HypnoApp {
         this.firebase.onConnectionStateChanged = (isConnected) => {
             console.log('🌌 Connection state:', isConnected ? 'Connected' : 'Disconnected');
         };
+        
+        // Sacred Geometry callbacks
+        this.firebase.onSacredGeometryCreated = (geometryId, geometryData) => {
+            console.log('🌌 Sacred Geometry created:', geometryId);
+            this.onSacredGeometryCreated(geometryId, geometryData);
+        };
+        
+        this.firebase.onSacredGeometryUpdated = (geometryId, geometryData) => {
+            this.onSacredGeometryUpdated(geometryId, geometryData);
+        };
+        
+        this.firebase.onSacredGeometryRemoved = (geometryId) => {
+            console.log('🌌 Sacred Geometry removed:', geometryId);
+            this.onSacredGeometryRemoved(geometryId);
+        };
+    }
+    
+    // ========================
+    // Sacred Geometry Methods
+    // ========================
+    
+    async initSacredGeometry() {
+        // Load existing sacred geometries
+        const geometries = await this.firebase.getAllSacredGeometries();
+        geometries.forEach(geo => {
+            this.sacredGeometryManager.addGeometry(geo.id, geo);
+        });
+        
+        // Setup listeners
+        this.firebase.setupSacredGeometryListeners();
+        
+        // Setup UI for sacred geometry
+        this.setupSacredGeometryUI();
+    }
+    
+    setupSacredGeometryUI() {
+        // Sacred geometry button in user menu
+        const sgBtn = document.getElementById('sacred-geometry-btn');
+        if (sgBtn) {
+            sgBtn.addEventListener('click', () => this.onCreateSacredGeometry());
+        }
+        
+        // Invite accept/decline buttons
+        const acceptBtn = document.getElementById('sg-accept-btn');
+        const declineBtn = document.getElementById('sg-decline-btn');
+        
+        if (acceptBtn) {
+            acceptBtn.addEventListener('click', () => this.onAcceptSacredGeometry());
+        }
+        if (declineBtn) {
+            declineBtn.addEventListener('click', () => this.onDeclineSacredGeometry());
+        }
+        
+        // Leave button
+        const leaveBtn = document.getElementById('sg-leave-btn');
+        if (leaveBtn) {
+            leaveBtn.addEventListener('click', () => this.onLeaveSacredGeometry());
+        }
+        
+        // Audio toggle
+        const audioBtn = document.getElementById('sg-audio-btn');
+        if (audioBtn) {
+            audioBtn.addEventListener('click', () => this.toggleSacredGeometryAudio());
+        }
+    }
+    
+    async onCreateSacredGeometry() {
+        const targetUserId = this.ui.selectedUserId;
+        if (!targetUserId) return;
+        
+        // Check if already in a sacred geometry
+        if (this.selfData && this.selfData.sacredGeometryId) {
+            alert('You are already in a Sacred Geometry. Leave it first to create a new one.');
+            return;
+        }
+        
+        console.log('🌌 Creating Sacred Geometry with:', targetUserId);
+        
+        try {
+            const geometryId = await this.firebase.createSacredGeometry(targetUserId);
+            if (geometryId) {
+                // Update self data
+                this.selfData = await this.firebase.getSelfData();
+                this.showSacredGeometryPanel();
+                
+                // Close user menu
+                this.ui.closeModal('user-menu');
+            }
+        } catch (error) {
+            console.error('Failed to create sacred geometry:', error);
+        }
+    }
+    
+    async onAcceptSacredGeometry() {
+        if (!this.selfData || !this.selfData.sacredGeometryInvite) return;
+        
+        const geometryId = this.selfData.sacredGeometryInvite;
+        
+        try {
+            await this.firebase.acceptSacredGeometryInvite(geometryId);
+            
+            // Update self data
+            this.selfData = await this.firebase.getSelfData();
+            
+            // Hide invite modal
+            const modal = document.getElementById('sg-invite-modal');
+            if (modal) modal.classList.add('hidden');
+            
+            // Show active panel
+            this.showSacredGeometryPanel();
+            
+            // Move self to sacred geometry position
+            await this.moveSelfToSacredGeometry(geometryId);
+            
+        } catch (error) {
+            console.error('Failed to accept sacred geometry:', error);
+        }
+    }
+    
+    async onDeclineSacredGeometry() {
+        try {
+            await this.firebase.declineSacredGeometryInvite();
+            
+            // Update self data
+            this.selfData = await this.firebase.getSelfData();
+            
+            // Hide invite modal
+            const modal = document.getElementById('sg-invite-modal');
+            if (modal) modal.classList.add('hidden');
+            
+        } catch (error) {
+            console.error('Failed to decline sacred geometry:', error);
+        }
+    }
+    
+    async onLeaveSacredGeometry() {
+        try {
+            // Stop audio if playing
+            if (this.currentSacredGeometry) {
+                this.currentSacredGeometry.stopBinauralBeats();
+            }
+            
+            await this.firebase.leaveSacredGeometry();
+            
+            // Update self data
+            this.selfData = await this.firebase.getSelfData();
+            
+            // Hide panel
+            this.hideSacredGeometryPanel();
+            
+            this.currentSacredGeometry = null;
+            
+        } catch (error) {
+            console.error('Failed to leave sacred geometry:', error);
+        }
+    }
+    
+    toggleSacredGeometryAudio() {
+        if (!this.currentSacredGeometry) return;
+        
+        const audioBtn = document.getElementById('sg-audio-btn');
+        
+        if (this.currentSacredGeometry.isAudioPlaying) {
+            this.currentSacredGeometry.stopBinauralBeats();
+            if (audioBtn) {
+                audioBtn.classList.remove('active');
+                audioBtn.querySelector('.audio-text').textContent = 'Enable Binaural Beats';
+                audioBtn.querySelector('.audio-icon').textContent = '🔇';
+            }
+        } else {
+            this.currentSacredGeometry.startBinauralBeats();
+            if (audioBtn) {
+                audioBtn.classList.add('active');
+                audioBtn.querySelector('.audio-text').textContent = 'Disable Binaural Beats';
+                audioBtn.querySelector('.audio-icon').textContent = '🔊';
+            }
+        }
+    }
+    
+    async moveSelfToSacredGeometry(geometryId) {
+        const geometryData = await this.firebase.getSacredGeometry(geometryId);
+        if (!geometryData || !geometryData.center) return;
+        
+        const members = Object.keys(geometryData.members || {});
+        const myIndex = members.indexOf(this.selfId);
+        
+        // Calculate position around the geometry center
+        const sacredGeo = this.sacredGeometryManager.getGeometry(geometryId);
+        if (sacredGeo) {
+            const newPos = sacredGeo.getMemberPosition(myIndex, members.length);
+            
+            // Animate self to new position
+            const selfShape = this.scene.users.get(this.selfId);
+            if (selfShape) {
+                gsap.to(selfShape.group.position, {
+                    x: newPos.x,
+                    y: newPos.y,
+                    z: newPos.z,
+                    duration: 2,
+                    ease: 'power2.inOut'
+                });
+                
+                // Update in Firebase
+                this.firebase.updatePosition(newPos.x, newPos.y, newPos.z);
+            }
+        }
+    }
+    
+    onSacredGeometryCreated(geometryId, geometryData) {
+        // Add the 3D visualization
+        this.sacredGeometryManager.addGeometry(geometryId, geometryData);
+        
+        // Check if we're a member
+        const members = geometryData.members || {};
+        if (members[this.selfId]) {
+            const myData = members[this.selfId];
+            
+            if (myData.pending) {
+                // Show invite modal
+                this.showSacredGeometryInvite(geometryId, geometryData);
+            } else {
+                // We're an active member
+                this.currentSacredGeometry = this.sacredGeometryManager.getGeometry(geometryId);
+                this.showSacredGeometryPanel();
+            }
+        }
+    }
+    
+    onSacredGeometryUpdated(geometryId, geometryData) {
+        // Update the 3D visualization
+        this.sacredGeometryManager.updateGeometry(geometryId, geometryData);
+        
+        // Update panel if this is our geometry
+        if (this.selfData && this.selfData.sacredGeometryId === geometryId) {
+            this.updateSacredGeometryPanel(geometryData);
+            
+            // Update current reference
+            this.currentSacredGeometry = this.sacredGeometryManager.getGeometry(geometryId);
+        }
+        
+        // Check for pending invite
+        const members = geometryData.members || {};
+        if (members[this.selfId] && members[this.selfId].pending) {
+            this.showSacredGeometryInvite(geometryId, geometryData);
+        }
+    }
+    
+    onSacredGeometryRemoved(geometryId) {
+        // Remove the 3D visualization
+        this.sacredGeometryManager.removeGeometry(geometryId);
+        
+        // If this was our geometry, clean up
+        if (this.selfData && this.selfData.sacredGeometryId === geometryId) {
+            this.currentSacredGeometry = null;
+            this.hideSacredGeometryPanel();
+        }
+    }
+    
+    showSacredGeometryInvite(geometryId, geometryData) {
+        const modal = document.getElementById('sg-invite-modal');
+        const fromSpan = document.getElementById('sg-invite-from');
+        
+        if (!modal) return;
+        
+        // Find who invited us
+        const creatorId = geometryData.createdBy;
+        const members = geometryData.members || {};
+        const creatorData = members[creatorId];
+        const creatorName = creatorData ? creatorData.nickname : 'Someone';
+        
+        if (fromSpan) {
+            fromSpan.textContent = creatorName;
+        }
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('visible');
+    }
+    
+    showSacredGeometryPanel() {
+        const panel = document.getElementById('sg-active-panel');
+        if (panel) {
+            panel.classList.remove('hidden');
+        }
+        
+        // Update with current data
+        if (this.selfData && this.selfData.sacredGeometryId) {
+            this.firebase.getSacredGeometry(this.selfData.sacredGeometryId).then(data => {
+                if (data) {
+                    this.updateSacredGeometryPanel(data);
+                }
+            });
+        }
+    }
+    
+    hideSacredGeometryPanel() {
+        const panel = document.getElementById('sg-active-panel');
+        if (panel) {
+            panel.classList.add('hidden');
+        }
+    }
+    
+    updateSacredGeometryPanel(geometryData) {
+        const membersContainer = document.getElementById('sg-panel-members');
+        if (!membersContainer) return;
+        
+        const members = geometryData.members || {};
+        membersContainer.innerHTML = '';
+        
+        Object.entries(members).forEach(([memberId, memberData]) => {
+            const memberEl = document.createElement('div');
+            memberEl.className = 'sg-member' + (memberData.pending ? ' pending' : '');
+            memberEl.innerHTML = `
+                <span class="sg-member-icon"></span>
+                <span>${memberData.nickname || 'Soul'}${memberData.pending ? ' (pending)' : ''}</span>
+            `;
+            membersContainer.appendChild(memberEl);
+        });
     }
     
     async onEnter(nickname, note) {
@@ -137,6 +462,23 @@ class HypnoApp {
             // Create self representation in scene
             const selfShape = this.scene.addUser(this.selfId, this.selfData, true);
             this.users.set(this.selfId, this.selfData);
+            
+            // Initialize sacred geometry system
+            await this.initSacredGeometry();
+            
+            // Check if we were in a sacred geometry
+            if (this.selfData.sacredGeometryId) {
+                this.currentSacredGeometry = this.sacredGeometryManager.getGeometry(this.selfData.sacredGeometryId);
+                this.showSacredGeometryPanel();
+            }
+            
+            // Check for pending invites
+            if (this.selfData.sacredGeometryInvite) {
+                const geoData = await this.firebase.getSacredGeometry(this.selfData.sacredGeometryInvite);
+                if (geoData) {
+                    this.showSacredGeometryInvite(this.selfData.sacredGeometryInvite, geoData);
+                }
+            }
             
         } catch (error) {
             console.error('🌌 Failed to enter:', error);
@@ -247,6 +589,12 @@ class HypnoApp {
         }
         if (this.connectionManager) {
             this.connectionManager.dispose();
+        }
+        if (this.sacredGeometryManager) {
+            this.sacredGeometryManager.dispose();
+        }
+        if (this.currentSacredGeometry) {
+            this.currentSacredGeometry.stopBinauralBeats();
         }
     }
 }

@@ -11,6 +11,7 @@ export class FirebaseSync {
         this.sessionId = null;
         this.userRef = null;
         this.usersRef = null;
+        this.sacredGeometryRef = null;
         this.isConnected = false;
         this.heartbeatInterval = null;
         
@@ -20,6 +21,11 @@ export class FirebaseSync {
         this.onUserRemoved = null;
         this.onActiveUserCountChanged = null;
         this.onConnectionStateChanged = null;
+        
+        // Sacred Geometry callbacks
+        this.onSacredGeometryCreated = null;
+        this.onSacredGeometryUpdated = null;
+        this.onSacredGeometryRemoved = null;
     }
     
     async init() {
@@ -31,6 +37,7 @@ export class FirebaseSync {
         this.db = firebase.database();
         this.sessionId = generateUUID();
         this.usersRef = this.db.ref('users');
+        this.sacredGeometryRef = this.db.ref('sacredGeometry');
         
         // Listen for connection state
         this.db.ref('.info/connected').on('value', (snapshot) => {
@@ -270,6 +277,222 @@ export class FirebaseSync {
         const currentResonance = snapshot.val() || [];
         
         return currentResonance.includes(targetId);
+    }
+    
+    // ========================
+    // Sacred Geometry Methods
+    // ========================
+    
+    setupSacredGeometryListeners() {
+        // Listen for new sacred geometries
+        this.sacredGeometryRef.on('child_added', (snapshot) => {
+            const geometryId = snapshot.key;
+            const geometryData = snapshot.val();
+            
+            if (this.onSacredGeometryCreated) {
+                this.onSacredGeometryCreated(geometryId, geometryData);
+            }
+        });
+        
+        // Listen for updates
+        this.sacredGeometryRef.on('child_changed', (snapshot) => {
+            const geometryId = snapshot.key;
+            const geometryData = snapshot.val();
+            
+            if (this.onSacredGeometryUpdated) {
+                this.onSacredGeometryUpdated(geometryId, geometryData);
+            }
+        });
+        
+        // Listen for removals
+        this.sacredGeometryRef.on('child_removed', (snapshot) => {
+            const geometryId = snapshot.key;
+            
+            if (this.onSacredGeometryRemoved) {
+                this.onSacredGeometryRemoved(geometryId);
+            }
+        });
+    }
+    
+    async getAllSacredGeometries() {
+        const snapshot = await this.sacredGeometryRef.once('value');
+        const geometries = snapshot.val() || {};
+        
+        return Object.entries(geometries).map(([id, data]) => ({
+            id,
+            ...data
+        }));
+    }
+    
+    async createSacredGeometry(targetUserId) {
+        // Create a new sacred geometry group
+        const geometryId = generateUUID();
+        const geometryRef = this.sacredGeometryRef.child(geometryId);
+        
+        // Get self and target user data
+        const selfData = await this.getSelfData();
+        const targetSnapshot = await this.db.ref(`users/${targetUserId}`).once('value');
+        const targetData = targetSnapshot.val();
+        
+        if (!selfData || !targetData) return null;
+        
+        // Calculate center position between the two users
+        const centerX = (selfData.position.x + targetData.position.x) / 2;
+        const centerY = (selfData.position.y + targetData.position.y) / 2;
+        const centerZ = (selfData.position.z + targetData.position.z) / 2;
+        
+        const geometryData = {
+            createdAt: firebase.database.ServerValue.TIMESTAMP,
+            createdBy: this.sessionId,
+            center: { x: centerX, y: centerY, z: centerZ },
+            members: {
+                [this.sessionId]: {
+                    joinedAt: firebase.database.ServerValue.TIMESTAMP,
+                    intention: selfData.intention,
+                    nickname: selfData.nickname
+                },
+                [targetUserId]: {
+                    joinedAt: firebase.database.ServerValue.TIMESTAMP,
+                    intention: targetData.intention,
+                    nickname: targetData.nickname,
+                    pending: true  // Pending until they accept
+                }
+            },
+            seed: Math.random() * 10000,  // Unique seed for geometry generation
+            active: true
+        };
+        
+        await geometryRef.set(geometryData);
+        
+        // Update self to reference this geometry
+        await this.userRef.update({
+            sacredGeometryId: geometryId,
+            sacredGeometryPending: false
+        });
+        
+        // Invite target user
+        await this.db.ref(`users/${targetUserId}`).update({
+            sacredGeometryInvite: geometryId,
+            sacredGeometryInviteFrom: this.sessionId
+        });
+        
+        // Remove geometry on disconnect if no other members
+        geometryRef.child(`members/${this.sessionId}`).onDisconnect().remove();
+        
+        return geometryId;
+    }
+    
+    async acceptSacredGeometryInvite(geometryId) {
+        const selfData = await this.getSelfData();
+        if (!selfData) return false;
+        
+        const geometryRef = this.sacredGeometryRef.child(geometryId);
+        
+        // Update member status
+        await geometryRef.child(`members/${this.sessionId}`).update({
+            pending: false,
+            joinedAt: firebase.database.ServerValue.TIMESTAMP,
+            intention: selfData.intention,
+            nickname: selfData.nickname
+        });
+        
+        // Update self
+        await this.userRef.update({
+            sacredGeometryId: geometryId,
+            sacredGeometryPending: false,
+            sacredGeometryInvite: null,
+            sacredGeometryInviteFrom: null
+        });
+        
+        // Setup disconnect cleanup
+        geometryRef.child(`members/${this.sessionId}`).onDisconnect().remove();
+        
+        return true;
+    }
+    
+    async declineSacredGeometryInvite() {
+        const selfData = await this.getSelfData();
+        if (!selfData || !selfData.sacredGeometryInvite) return;
+        
+        const geometryId = selfData.sacredGeometryInvite;
+        
+        // Remove self from pending members
+        await this.sacredGeometryRef.child(`${geometryId}/members/${this.sessionId}`).remove();
+        
+        // Clear invite from self
+        await this.userRef.update({
+            sacredGeometryInvite: null,
+            sacredGeometryInviteFrom: null
+        });
+    }
+    
+    async joinSacredGeometry(geometryId) {
+        const selfData = await this.getSelfData();
+        if (!selfData) return false;
+        
+        const geometryRef = this.sacredGeometryRef.child(geometryId);
+        
+        // Add self as member
+        await geometryRef.child(`members/${this.sessionId}`).set({
+            joinedAt: firebase.database.ServerValue.TIMESTAMP,
+            intention: selfData.intention,
+            nickname: selfData.nickname,
+            pending: false
+        });
+        
+        // Update self
+        await this.userRef.update({
+            sacredGeometryId: geometryId,
+            sacredGeometryPending: false
+        });
+        
+        // Setup disconnect cleanup
+        geometryRef.child(`members/${this.sessionId}`).onDisconnect().remove();
+        
+        return true;
+    }
+    
+    async leaveSacredGeometry() {
+        const selfData = await this.getSelfData();
+        if (!selfData || !selfData.sacredGeometryId) return;
+        
+        const geometryId = selfData.sacredGeometryId;
+        const geometryRef = this.sacredGeometryRef.child(geometryId);
+        
+        // Remove self from members
+        await geometryRef.child(`members/${this.sessionId}`).remove();
+        
+        // Check if geometry should be deleted (no active members)
+        const snapshot = await geometryRef.child('members').once('value');
+        const members = snapshot.val() || {};
+        const activeMembers = Object.values(members).filter(m => !m.pending);
+        
+        if (activeMembers.length === 0) {
+            // Delete the geometry
+            await geometryRef.remove();
+        }
+        
+        // Clear from self
+        await this.userRef.update({
+            sacredGeometryId: null,
+            sacredGeometryPending: null
+        });
+    }
+    
+    async getSacredGeometry(geometryId) {
+        const snapshot = await this.sacredGeometryRef.child(geometryId).once('value');
+        return snapshot.val();
+    }
+    
+    async updateSacredGeometryIntention() {
+        const selfData = await this.getSelfData();
+        if (!selfData || !selfData.sacredGeometryId) return;
+        
+        await this.sacredGeometryRef
+            .child(`${selfData.sacredGeometryId}/members/${this.sessionId}`)
+            .update({
+                intention: selfData.intention
+            });
     }
     
     // Cleanup

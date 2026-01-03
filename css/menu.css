@@ -616,6 +616,293 @@
     box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
 }
 
+/* ============================================
+   Sacred Geometry Styles
+   ============================================ */
+
+/* Sacred Geometry Button in User Menu */
+.sacred-geometry-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    width: 100%;
+    padding: var(--space-md) var(--space-lg);
+    margin-top: var(--space-md);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    border-radius: var(--radius-lg);
+    color: var(--star-white);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.sacred-geometry-btn:hover {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.4) 0%, rgba(6, 182, 212, 0.4) 100%);
+    border-color: rgba(16, 185, 129, 0.8);
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.sacred-geometry-btn.active {
+    background: linear-gradient(135deg, var(--transcendence) 0%, var(--healing) 100%);
+    border-color: transparent;
+}
+
+.sacred-geometry-btn.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.sg-icon {
+    font-size: 1.1rem;
+    animation: sg-rotate 10s linear infinite;
+}
+
+@keyframes sg-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.sg-description {
+    font-size: 0.75rem;
+    color: var(--star-faint);
+    text-align: center;
+    margin-top: var(--space-sm);
+    line-height: 1.5;
+}
+
+/* Sacred Geometry Invite Modal */
+.sg-invite-modal {
+    max-width: 400px;
+    text-align: center;
+    padding: var(--space-2xl);
+}
+
+.sg-invite-icon {
+    font-size: 4rem;
+    margin-bottom: var(--space-lg);
+    animation: sg-pulse 2s ease-in-out infinite;
+    background: linear-gradient(135deg, var(--transcendence), var(--healing));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+@keyframes sg-pulse {
+    0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.8; }
+    50% { transform: scale(1.1) rotate(30deg); opacity: 1; }
+}
+
+.sg-invite-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--space-md);
+    background: linear-gradient(135deg, var(--transcendence), var(--healing));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.sg-invite-text {
+    font-size: 1rem;
+    color: var(--star-white);
+    margin-bottom: var(--space-md);
+}
+
+.sg-invite-text span {
+    color: var(--transcendence);
+    font-weight: 500;
+}
+
+.sg-invite-desc {
+    font-size: 0.875rem;
+    color: var(--star-dim);
+    line-height: 1.6;
+    margin-bottom: var(--space-xl);
+}
+
+.sg-invite-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.sg-accept-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    width: 100%;
+    padding: var(--space-md) var(--space-lg);
+    background: linear-gradient(135deg, var(--transcendence) 0%, var(--healing) 100%);
+    border: none;
+    border-radius: var(--radius-lg);
+    color: white;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.sg-accept-btn:hover {
+    transform: scale(1.02);
+    box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4);
+}
+
+.sg-decline-btn {
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    color: var(--star-dim);
+    padding: var(--space-sm) var(--space-lg);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.sg-decline-btn:hover {
+    border-color: var(--star-dim);
+    color: var(--star-white);
+}
+
+/* Sacred Geometry Active Panel */
+.sg-active-panel {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    width: 280px;
+    background: var(--glass-bg);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    padding: var(--space-md);
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3),
+                0 0 30px rgba(16, 185, 129, 0.1);
+}
+
+.sg-active-panel.hidden {
+    display: none;
+}
+
+.sg-panel-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.sg-panel-icon {
+    font-size: 1.2rem;
+    animation: sg-rotate 10s linear infinite;
+    color: var(--transcendence);
+}
+
+.sg-panel-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: var(--star-white);
+}
+
+.sg-panel-members {
+    margin-bottom: var(--space-md);
+}
+
+.sg-member {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-xs) 0;
+    font-size: 0.8rem;
+    color: var(--star-dim);
+}
+
+.sg-member-icon {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--transcendence);
+}
+
+.sg-member.pending .sg-member-icon {
+    background: var(--star-faint);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.sg-panel-audio {
+    margin-bottom: var(--space-md);
+}
+
+.sg-audio-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: var(--radius-md);
+    color: var(--star-white);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.sg-audio-btn:hover {
+    background: rgba(16, 185, 129, 0.2);
+}
+
+.sg-audio-btn.active {
+    background: rgba(16, 185, 129, 0.3);
+    border-color: var(--transcendence);
+}
+
+.sg-audio-btn.active .audio-icon::before {
+    content: '🔊';
+}
+
+.sg-leave-btn {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    background: transparent;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-md);
+    color: rgba(239, 68, 68, 0.8);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.sg-leave-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+@media (max-width: 768px) {
+    .sg-active-panel {
+        top: auto;
+        bottom: 20px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+    }
+}
+
 /* Mobile Adjustments */
 @media (max-width: 768px) {
     .modal-overlay {

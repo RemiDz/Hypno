@@ -892,6 +892,11 @@ export class CosmicScene {
             this.connectionManager.animate(delta, elapsed);
         }
         
+        // Update sacred geometries
+        if (this.sacredGeometryManager) {
+            this.sacredGeometryManager.animate(delta, elapsed);
+        }
+        
         // Update label orientations to face camera
         this.users.forEach(userShape => {
             if (userShape.label) {
