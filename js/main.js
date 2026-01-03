@@ -494,8 +494,8 @@ class HypnoApp {
         });
     }
     
-    async onEnter(nickname, note) {
-        console.log('🌌 Entering the void as:', nickname);
+    async onEnter(nickname, note, intention = 'observer', emotion = 'neutral') {
+        console.log('🌌 Entering the void as:', nickname, 'with intention:', intention);
         
         try {
             // Get session ID first
@@ -514,8 +514,8 @@ class HypnoApp {
                 this.addUser(id, data);
             });
             
-            // Connect to Firebase with initial data
-            this.selfData = await this.firebase.connect({ nickname, note });
+            // Connect to Firebase with initial data including intention and emotion
+            this.selfData = await this.firebase.connect({ nickname, note, intention, emotion });
             
             // Create self representation in scene
             const selfShape = this.scene.addUser(this.selfId, this.selfData, true);

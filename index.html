@@ -20,9 +20,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet">
     
     <!-- Styles with cache-busting -->
-    <link rel="stylesheet" href="css/styles.css?v=20260103d">
-    <link rel="stylesheet" href="css/menu.css?v=20260103d">
-    <link rel="stylesheet" href="css/animations.css?v=20260103d">
+    <link rel="stylesheet" href="css/styles.css?v=20260103e">
+    <link rel="stylesheet" href="css/menu.css?v=20260103e">
+    <link rel="stylesheet" href="css/animations.css?v=20260103e">
     
     <!-- Critical inline styles for mobile welcome modal -->
     <style>
@@ -109,8 +109,57 @@
         }
         
         .welcome-modal .cosmic-textarea {
-            min-height: 70px !important;
+            min-height: 60px !important;
             resize: none !important;
+        }
+        
+        /* Welcome Intention/Emotion Grids */
+        .welcome-intention-grid,
+        .welcome-emotion-grid {
+            display: grid !important;
+            grid-template-columns: repeat(5, 1fr) !important;
+            gap: 6px !important;
+            margin-top: 6px !important;
+        }
+        
+        .welcome-intent-btn,
+        .welcome-emotion-btn {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 8px 4px !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            border-radius: 8px !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+            font-size: 1.1rem !important;
+        }
+        
+        .welcome-intent-btn:hover,
+        .welcome-emotion-btn:hover {
+            background: rgba(139, 92, 246, 0.2) !important;
+            border-color: rgba(139, 92, 246, 0.4) !important;
+        }
+        
+        .welcome-intent-btn.selected,
+        .welcome-emotion-btn.selected {
+            background: rgba(139, 92, 246, 0.3) !important;
+            border-color: #8B5CF6 !important;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.3) !important;
+        }
+        
+        @media (max-width: 768px) {
+            .welcome-intention-grid,
+            .welcome-emotion-grid {
+                grid-template-columns: repeat(5, 1fr) !important;
+                gap: 4px !important;
+            }
+            .welcome-intent-btn,
+            .welcome-emotion-btn {
+                padding: 6px 2px !important;
+                font-size: 1rem !important;
+            }
         }
         
         /* Settings button - FORCE visible when not hidden */
@@ -263,15 +312,47 @@
         <div class="modal welcome-modal">
             <div class="modal-glow"></div>
             <h1 class="welcome-title">✧ Welcome to the Cosmos ✧</h1>
-            <p class="welcome-subtitle">You are about to join souls from across the world<br>in an infinite space of connection.</p>
+            <p class="welcome-subtitle">You are about to join souls from across the world in an infinite space of connection.</p>
             
             <div class="form-group">
-                <label for="nickname-input">Choose your name for this journey:</label>
+                <label for="nickname-input">Your name:</label>
                 <input type="text" id="nickname-input" class="cosmic-input" placeholder="Anonymous Wanderer" maxlength="24" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="text">
             </div>
             
             <div class="form-group">
-                <label for="note-input">Leave a note for others who find you (optional):</label>
+                <label>Your intention:</label>
+                <div class="welcome-intention-grid" id="welcome-intention-grid">
+                    <button class="welcome-intent-btn" data-intention="observer" title="Watching"><span>◯</span></button>
+                    <button class="welcome-intent-btn" data-intention="peace" title="Peace"><span>●</span></button>
+                    <button class="welcome-intent-btn" data-intention="love" title="Love"><span>♥</span></button>
+                    <button class="welcome-intent-btn" data-intention="clarity" title="Clarity"><span>◆</span></button>
+                    <button class="welcome-intent-btn" data-intention="creativity" title="Creativity"><span>★</span></button>
+                    <button class="welcome-intent-btn" data-intention="transcendence" title="Transcend"><span>∿</span></button>
+                    <button class="welcome-intent-btn" data-intention="healing" title="Healing"><span>✿</span></button>
+                    <button class="welcome-intent-btn" data-intention="wisdom" title="Wisdom"><span>△</span></button>
+                    <button class="welcome-intent-btn" data-intention="unity" title="Unity"><span>∞</span></button>
+                    <button class="welcome-intent-btn" data-intention="transformation" title="Transform"><span>🔥</span></button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>How you feel:</label>
+                <div class="welcome-emotion-grid" id="welcome-emotion-grid">
+                    <button class="welcome-emotion-btn" data-emotion="neutral" title="Neutral"><span>😐</span></button>
+                    <button class="welcome-emotion-btn" data-emotion="joyful" title="Joyful"><span>😊</span></button>
+                    <button class="welcome-emotion-btn" data-emotion="peaceful" title="Peaceful"><span>😌</span></button>
+                    <button class="welcome-emotion-btn" data-emotion="grateful" title="Grateful"><span>🙏</span></button>
+                    <button class="welcome-emotion-btn" data-emotion="curious" title="Curious"><span>🤔</span></button>
+                    <button class="welcome-emotion-btn" data-emotion="loving" title="Loving"><span>💕</span></button>
+                    <button class="welcome-emotion-btn" data-emotion="excited" title="Excited"><span>🎉</span></button>
+                    <button class="welcome-emotion-btn" data-emotion="serene" title="Serene"><span>🌊</span></button>
+                    <button class="welcome-emotion-btn" data-emotion="sad" title="Sad"><span>😢</span></button>
+                    <button class="welcome-emotion-btn" data-emotion="anxious" title="Anxious"><span>😰</span></button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="note-input">Note (optional):</label>
                 <textarea id="note-input" class="cosmic-textarea" placeholder="What brings you to the void today?" maxlength="200" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false"></textarea>
             </div>
             

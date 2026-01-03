@@ -131,13 +131,18 @@ export class FirebaseSync {
             throw new Error(capacity.message);
         }
         
+        // Use provided intention/emotion or defaults
+        const intention = initialData.intention || DEFAULT_USER.intention;
+        const emotion = initialData.emotion || DEFAULT_USER.emotion;
+        const intentionData = INTENTIONS[intention] || INTENTIONS[DEFAULT_USER.intention];
+        
         const userData = {
             nickname: initialData.nickname || DEFAULT_USER.nickname,
             note: initialData.note || DEFAULT_USER.note,
-            intention: DEFAULT_USER.intention,
-            emotion: DEFAULT_USER.emotion,
-            shape: INTENTIONS[DEFAULT_USER.intention].shape,
-            color: INTENTIONS[DEFAULT_USER.intention].color,
+            intention: intention,
+            emotion: emotion,
+            shape: intentionData.shape,
+            color: intentionData.color,
             position: randomPosition(),
             connectedAt: firebase.database.ServerValue.TIMESTAMP,
             lastSeen: firebase.database.ServerValue.TIMESTAMP,

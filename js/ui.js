@@ -75,6 +75,34 @@ export class UIManager {
         this.nicknameInput.addEventListener('input', () => this.persistProfile());
         this.noteInput.addEventListener('input', () => this.persistProfile());
         
+        // Welcome modal - Intention selection
+        const welcomeIntentionGrid = document.getElementById('welcome-intention-grid');
+        if (welcomeIntentionGrid) {
+            welcomeIntentionGrid.querySelectorAll('.welcome-intent-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Remove selected from all
+                    welcomeIntentionGrid.querySelectorAll('.welcome-intent-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    this.selectedWelcomeIntention = btn.dataset.intention;
+                    this.persistProfile();
+                });
+            });
+        }
+        
+        // Welcome modal - Emotion selection
+        const welcomeEmotionGrid = document.getElementById('welcome-emotion-grid');
+        if (welcomeEmotionGrid) {
+            welcomeEmotionGrid.querySelectorAll('.welcome-emotion-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Remove selected from all
+                    welcomeEmotionGrid.querySelectorAll('.welcome-emotion-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    this.selectedWelcomeEmotion = btn.dataset.emotion;
+                    this.persistProfile();
+                });
+            });
+        }
+        
         // Menu button
         this.menuBtn.addEventListener('click', () => this.openSelfMenu());
         
@@ -171,6 +199,17 @@ export class UIManager {
         this.hideLoading();
         showElement(this.welcomeModal, true);
         
+        // Set default selections if not already set
+        if (!this.selectedWelcomeIntention) {
+            this.selectedWelcomeIntention = 'observer';
+        }
+        if (!this.selectedWelcomeEmotion) {
+            this.selectedWelcomeEmotion = 'neutral';
+        }
+        
+        // Update the grid selections
+        this.updateWelcomeGridSelections();
+        
         // On mobile, show settings button right away so users can access joystick/gyro settings
         if (this.isMobile() && this.settingsBtn) {
             this.settingsBtn.classList.remove('hidden');
@@ -180,15 +219,17 @@ export class UIManager {
     async onEnterClick() {
         const nickname = this.nicknameInput.value.trim() || 'Anonymous Wanderer';
         const note = this.noteInput.value.trim();
+        const intention = this.selectedWelcomeIntention || 'observer';
+        const emotion = this.selectedWelcomeEmotion || 'neutral';
         this.persistProfile();
         
         // Hide welcome, show main UI
         showElement(this.welcomeModal, false);
         this.showMainUI();
         
-        // Emit enter event
+        // Emit enter event with all data
         if (this.onEnter) {
-            await this.onEnter(nickname, note);
+            await this.onEnter(nickname, note, intention, emotion);
         }
     }
     
@@ -488,15 +529,19 @@ export class UIManager {
     selectIntention(intention) {
         this.firebase.updateIntention(intention);
         this.selfData.intention = intention;
+        this.selectedWelcomeIntention = intention; // Keep in sync
         this.updateIntentionButtons(intention);
         this.updateCurrentSelectionText();
+        this.persistProfile(); // Save to localStorage
     }
     
     selectEmotion(emotion) {
         this.firebase.updateEmotion(emotion);
         this.selfData.emotion = emotion;
+        this.selectedWelcomeEmotion = emotion; // Keep in sync
         this.updateEmotionButtons(emotion);
         this.updateCurrentSelectionText();
+        this.persistProfile(); // Save to localStorage
     }
     
     startConnectionTimeUpdates() {
@@ -863,11 +908,38 @@ export class UIManager {
         
         const nickname = profile.nickname || '';
         const note = profile.note || '';
+        const intention = profile.intention || 'observer';
+        const emotion = profile.emotion || 'neutral';
         
         if (this.nicknameInput && nickname) this.nicknameInput.value = nickname;
         if (this.noteInput && note) this.noteInput.value = note;
         if (this.selfNickname && nickname) this.selfNickname.value = nickname;
         if (this.selfNote && note) this.selfNote.value = note;
+        
+        // Set saved intention/emotion
+        this.selectedWelcomeIntention = intention;
+        this.selectedWelcomeEmotion = emotion;
+        
+        // Update welcome grid selections
+        this.updateWelcomeGridSelections();
+    }
+    
+    updateWelcomeGridSelections() {
+        // Update welcome intention grid
+        const welcomeIntentionGrid = document.getElementById('welcome-intention-grid');
+        if (welcomeIntentionGrid && this.selectedWelcomeIntention) {
+            welcomeIntentionGrid.querySelectorAll('.welcome-intent-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.intention === this.selectedWelcomeIntention);
+            });
+        }
+        
+        // Update welcome emotion grid
+        const welcomeEmotionGrid = document.getElementById('welcome-emotion-grid');
+        if (welcomeEmotionGrid && this.selectedWelcomeEmotion) {
+            welcomeEmotionGrid.querySelectorAll('.welcome-emotion-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.emotion === this.selectedWelcomeEmotion);
+            });
+        }
     }
     
     persistSettings() {
@@ -877,7 +949,9 @@ export class UIManager {
     persistProfile() {
         const nickname = (this.nicknameInput?.value || '').trim() || DEFAULT_USER.nickname;
         const note = (this.noteInput?.value || '').trim();
-        saveToLocal(this.storageKeys.profile, { nickname, note });
+        const intention = this.selectedWelcomeIntention || 'observer';
+        const emotion = this.selectedWelcomeEmotion || 'neutral';
+        saveToLocal(this.storageKeys.profile, { nickname, note, intention, emotion });
     }
     
     clearLocalData() {
