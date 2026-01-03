@@ -187,10 +187,25 @@ export class UIManager {
                 delay: 0.6
             });
         }
+        
+        // Show mobile joystick on mobile devices
+        const mobileJoystick = document.getElementById('mobile-joystick');
+        if (mobileJoystick && this.isMobile()) {
+            mobileJoystick.classList.remove('hidden');
+            
+            gsap.from(mobileJoystick, {
+                scale: 0,
+                opacity: 0,
+                duration: 0.5,
+                delay: 0.7,
+                ease: 'back.out(1.7)'
+            });
+        }
     }
     
     isMobile() {
-        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+               (window.innerWidth <= 768);
     }
     
     // ========================
@@ -204,12 +219,12 @@ export class UIManager {
         
         if (this.soulsCounter.textContent !== text) {
             gsap.to(this.soulsCounter, {
-                opacity: 0,
+                opacity: 0.3,
                 duration: 0.2,
                 onComplete: () => {
                     this.soulsCounter.textContent = text;
                     gsap.to(this.soulsCounter, {
-                        opacity: 0.7,
+                        opacity: 1,
                         duration: 0.3
                     });
                 }

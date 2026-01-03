@@ -46,6 +46,7 @@ export class CosmicScene {
             down: false
         };
         this.moveSpeed = 50; // Units per second
+        this.joystickInput = null; // For mobile joystick
     }
     
     async init() {
@@ -212,6 +213,88 @@ export class CosmicScene {
         // Keyboard controls for movement
         document.addEventListener('keydown', this.onKeyDown.bind(this));
         document.addEventListener('keyup', this.onKeyUp.bind(this));
+        
+        // Mobile joystick
+        this.initMobileJoystick();
+    }
+    
+    initMobileJoystick() {
+        const joystick = document.getElementById('mobile-joystick');
+        const stick = document.getElementById('joystick-stick');
+        
+        if (!joystick || !stick) return;
+        
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+        const maxDistance = 35; // Max distance stick can move from center
+        
+        const handleStart = (e) => {
+            e.preventDefault();
+            isDragging = true;
+            const touch = e.touches ? e.touches[0] : e;
+            const rect = joystick.querySelector('.joystick-base').getBoundingClientRect();
+            startX = rect.left + rect.width / 2;
+            startY = rect.top + rect.height / 2;
+        };
+        
+        const handleMove = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            
+            const touch = e.touches ? e.touches[0] : e;
+            let deltaX = touch.clientX - startX;
+            let deltaY = touch.clientY - startY;
+            
+            // Clamp to max distance
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            if (distance > maxDistance) {
+                deltaX = (deltaX / distance) * maxDistance;
+                deltaY = (deltaY / distance) * maxDistance;
+            }
+            
+            // Move the stick
+            stick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+            
+            // Calculate normalized movement (-1 to 1)
+            const normalizedX = deltaX / maxDistance;
+            const normalizedY = deltaY / maxDistance;
+            
+            // Update move state based on joystick position
+            const threshold = 0.3;
+            this.moveState.forward = normalizedY < -threshold;
+            this.moveState.backward = normalizedY > threshold;
+            this.moveState.left = normalizedX < -threshold;
+            this.moveState.right = normalizedX > threshold;
+            
+            // Store joystick values for smooth movement
+            this.joystickInput = { x: normalizedX, y: normalizedY };
+            
+            this.controls.autoRotate = false;
+        };
+        
+        const handleEnd = () => {
+            isDragging = false;
+            stick.style.transform = 'translate(0, 0)';
+            
+            // Reset move state
+            this.moveState.forward = false;
+            this.moveState.backward = false;
+            this.moveState.left = false;
+            this.moveState.right = false;
+            this.joystickInput = null;
+        };
+        
+        // Touch events
+        joystick.addEventListener('touchstart', handleStart, { passive: false });
+        document.addEventListener('touchmove', handleMove, { passive: false });
+        document.addEventListener('touchend', handleEnd);
+        document.addEventListener('touchcancel', handleEnd);
+        
+        // Mouse events for testing on desktop
+        joystick.addEventListener('mousedown', handleStart);
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleEnd);
     }
     
     onKeyDown(event) {
@@ -287,7 +370,7 @@ export class CosmicScene {
     updateMovement(delta) {
         if (!this.selfShape) return;
         
-        const isMoving = Object.values(this.moveState).some(v => v);
+        const isMoving = Object.values(this.moveState).some(v => v) || this.joystickInput;
         if (!isMoving) return;
         
         // Get camera direction (ignoring Y for horizontal movement)
@@ -304,18 +387,28 @@ export class CosmicScene {
         const movement = new THREE.Vector3();
         const speed = this.moveSpeed * delta;
         
-        if (this.moveState.forward) {
-            movement.add(cameraDirection.clone().multiplyScalar(speed));
+        // Use joystick input for smooth analog movement on mobile
+        if (this.joystickInput) {
+            // Forward/backward based on joystick Y (inverted)
+            movement.add(cameraDirection.clone().multiplyScalar(-this.joystickInput.y * speed));
+            // Left/right based on joystick X
+            movement.add(rightVector.clone().multiplyScalar(this.joystickInput.x * speed));
+        } else {
+            // Keyboard input (digital)
+            if (this.moveState.forward) {
+                movement.add(cameraDirection.clone().multiplyScalar(speed));
+            }
+            if (this.moveState.backward) {
+                movement.add(cameraDirection.clone().multiplyScalar(-speed));
+            }
+            if (this.moveState.left) {
+                movement.add(rightVector.clone().multiplyScalar(-speed));
+            }
+            if (this.moveState.right) {
+                movement.add(rightVector.clone().multiplyScalar(speed));
+            }
         }
-        if (this.moveState.backward) {
-            movement.add(cameraDirection.clone().multiplyScalar(-speed));
-        }
-        if (this.moveState.left) {
-            movement.add(rightVector.clone().multiplyScalar(-speed));
-        }
-        if (this.moveState.right) {
-            movement.add(rightVector.clone().multiplyScalar(speed));
-        }
+        
         if (this.moveState.up) {
             movement.y += speed;
         }

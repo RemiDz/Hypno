@@ -87,12 +87,47 @@ export class FirebaseSync {
                 });
             }
         }, 30000);
+        
+        // Clean up stale users every 60 seconds
+        this.staleCleanupInterval = setInterval(() => {
+            this.cleanupStaleUsers();
+        }, 60000);
+        
+        // Run initial cleanup
+        this.cleanupStaleUsers();
+    }
+    
+    async cleanupStaleUsers() {
+        // Remove users who haven't been seen in 2 minutes
+        const staleThreshold = Date.now() - (2 * 60 * 1000);
+        
+        try {
+            const snapshot = await this.usersRef.once('value');
+            const users = snapshot.val() || {};
+            
+            Object.entries(users).forEach(([userId, userData]) => {
+                // Don't clean up self
+                if (userId === this.sessionId) return;
+                
+                const lastSeen = userData.lastSeen || 0;
+                if (lastSeen < staleThreshold) {
+                    console.log('🌌 Cleaning up stale user:', userId);
+                    this.db.ref(`users/${userId}`).remove();
+                }
+            });
+        } catch (error) {
+            console.error('Error cleaning up stale users:', error);
+        }
     }
     
     stopHeartbeat() {
         if (this.heartbeatInterval) {
             clearInterval(this.heartbeatInterval);
             this.heartbeatInterval = null;
+        }
+        if (this.staleCleanupInterval) {
+            clearInterval(this.staleCleanupInterval);
+            this.staleCleanupInterval = null;
         }
     }
     
