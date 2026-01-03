@@ -102,7 +102,8 @@ export class UIManager {
         }
         
         // Click outside modal to close
-        [this.selfMenu, this.userMenu, this.settingsMenu].forEach(modal => {
+        const sgInfoModal = document.getElementById('sg-info-modal');
+        [this.selfMenu, this.userMenu, this.settingsMenu, sgInfoModal].forEach(modal => {
             if (modal) {
                 modal.addEventListener('click', (e) => {
                     if (e.target === modal) {
@@ -527,6 +528,11 @@ export class UIManager {
         showElement(this.userMenu, false);
         if (this.settingsMenu) {
             showElement(this.settingsMenu, false);
+        }
+        // Close sacred geometry info modal
+        const sgInfoModal = document.getElementById('sg-info-modal');
+        if (sgInfoModal) {
+            showElement(sgInfoModal, false);
         }
         this.stopConnectionTimeUpdates();
         this.selectedUserId = null;

@@ -802,6 +802,138 @@
     color: var(--star-white);
 }
 
+/* Sacred Geometry Info Modal */
+.sg-info-modal {
+    max-width: 420px;
+}
+
+.sg-info-intention {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+    padding: var(--space-lg);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sg-info-icon {
+    font-size: 2.5rem;
+    animation: sg-pulse 2s ease-in-out infinite;
+}
+
+.sg-info-intention-name {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    text-transform: capitalize;
+}
+
+.sg-info-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.sg-info-stat {
+    text-align: center;
+    padding: var(--space-md);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sg-stat-label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--star-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-xs);
+}
+
+.sg-stat-value {
+    display: block;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--star-white);
+}
+
+.sg-info-members-section {
+    margin-bottom: var(--space-md);
+}
+
+.sg-info-members-section label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--star-dim);
+    margin-bottom: var(--space-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.sg-info-members-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+
+.sg-info-member {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    color: var(--star-white);
+}
+
+.sg-info-member-icon {
+    font-size: 0.9rem;
+}
+
+.sg-info-creator {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--star-dim);
+    margin-bottom: var(--space-lg);
+}
+
+.sg-info-creator span {
+    color: var(--star-white);
+    font-weight: 400;
+}
+
+.sg-join-btn {
+    width: 100%;
+    margin-top: 0;
+}
+
+.sg-join-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.sg-join-note {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--star-faint);
+    margin-top: var(--space-sm);
+    min-height: 1.2em;
+}
+
+@media (max-width: 480px) {
+    .sg-info-stats {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Sacred Geometry Active Panel */
 .sg-active-panel {
     position: fixed;

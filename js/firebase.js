@@ -417,10 +417,16 @@ export class FirebaseSync {
         const centerY = (selfData.position.y + targetData.position.y) / 2;
         const centerZ = (selfData.position.z + targetData.position.z) / 2;
         
+        // Calculate main intention (most common, or creator's if tie)
+        const mainIntention = selfData.intention;
+        
         const geometryData = {
             createdAt: firebase.database.ServerValue.TIMESTAMP,
             createdBy: this.sessionId,
+            creatorNickname: selfData.nickname,
             center: { x: centerX, y: centerY, z: centerZ },
+            mainIntention: mainIntention,
+            totalMembersEver: 2, // Track historical member count
             members: {
                 [this.sessionId]: {
                     joinedAt: firebase.database.ServerValue.TIMESTAMP,
@@ -472,6 +478,9 @@ export class FirebaseSync {
             nickname: selfData.nickname
         });
         
+        // Update main intention based on all active members
+        await this.updateGeometryMainIntention(geometryId);
+        
         // Update self
         await this.userRef.update({
             sacredGeometryId: geometryId,
@@ -484,6 +493,36 @@ export class FirebaseSync {
         geometryRef.child(`members/${this.sessionId}`).onDisconnect().remove();
         
         return true;
+    }
+    
+    async updateGeometryMainIntention(geometryId) {
+        const geometryRef = this.sacredGeometryRef.child(geometryId);
+        const snapshot = await geometryRef.once('value');
+        const geometryData = snapshot.val();
+        
+        if (!geometryData || !geometryData.members) return;
+        
+        // Count intentions among active members
+        const intentionCounts = {};
+        const activeMembers = Object.values(geometryData.members).filter(m => !m.pending);
+        
+        activeMembers.forEach(member => {
+            const intention = member.intention || 'observer';
+            intentionCounts[intention] = (intentionCounts[intention] || 0) + 1;
+        });
+        
+        // Find the most common intention
+        let mainIntention = geometryData.mainIntention || 'observer';
+        let maxCount = 0;
+        
+        Object.entries(intentionCounts).forEach(([intention, count]) => {
+            if (count > maxCount) {
+                maxCount = count;
+                mainIntention = intention;
+            }
+        });
+        
+        await geometryRef.update({ mainIntention });
     }
     
     async declineSacredGeometryInvite() {
@@ -508,6 +547,11 @@ export class FirebaseSync {
         
         const geometryRef = this.sacredGeometryRef.child(geometryId);
         
+        // Get current geometry data to update total members
+        const snapshot = await geometryRef.once('value');
+        const geometryData = snapshot.val();
+        const currentTotal = geometryData?.totalMembersEver || 1;
+        
         // Add self as member
         await geometryRef.child(`members/${this.sessionId}`).set({
             joinedAt: firebase.database.ServerValue.TIMESTAMP,
@@ -515,6 +559,14 @@ export class FirebaseSync {
             nickname: selfData.nickname,
             pending: false
         });
+        
+        // Update total members count
+        await geometryRef.update({
+            totalMembersEver: currentTotal + 1
+        });
+        
+        // Update main intention
+        await this.updateGeometryMainIntention(geometryId);
         
         // Update self
         await this.userRef.update({

@@ -67,14 +67,39 @@ export class SacredGeometryGroup {
             );
         }
         
+        // Store geometry ID for click detection
+        this.group.userData.sacredGeometryId = this.id;
+        this.group.userData.isSacredGeometry = true;
+        
         // Create the sacred geometry
         this.createSacredPattern();
+        
+        // Create clickable hitbox
+        this.createHitbox();
         
         // Add to scene
         this.threeScene.add(this.group);
         
         // Animate entry
         this.animateEntry();
+    }
+    
+    createHitbox() {
+        // Invisible sphere for click detection
+        const memberCount = Object.keys(this.data.members || {}).length;
+        const radius = 25 + memberCount * 5;
+        
+        const geometry = new THREE.SphereGeometry(radius, 16, 16);
+        const material = new THREE.MeshBasicMaterial({
+            transparent: true,
+            opacity: 0,
+            depthWrite: false
+        });
+        
+        this.hitbox = new THREE.Mesh(geometry, material);
+        this.hitbox.userData.sacredGeometryId = this.id;
+        this.hitbox.userData.isSacredGeometry = true;
+        this.group.add(this.hitbox);
     }
     
     getMemberColors() {

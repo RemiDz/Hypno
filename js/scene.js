@@ -748,22 +748,46 @@ export class CosmicScene {
         
         this.raycaster.setFromCamera(this.mouse, this.camera);
         
-        const userMeshes = [];
+        // Collect all clickable objects
+        const clickableObjects = [];
+        
+        // Add user shapes
         this.users.forEach((userShape, userId) => {
             if (userShape.group) {
                 userShape.group.userData.userId = userId;
-                userMeshes.push(userShape.group);
+                clickableObjects.push(userShape.group);
             }
         });
         
-        const intersects = this.raycaster.intersectObjects(userMeshes, true);
+        // Add sacred geometries
+        if (this.sacredGeometryManager) {
+            this.sacredGeometryManager.geometries.forEach((geometry, geometryId) => {
+                if (geometry.group) {
+                    clickableObjects.push(geometry.group);
+                }
+            });
+        }
+        
+        const intersects = this.raycaster.intersectObjects(clickableObjects, true);
         
         if (intersects.length > 0) {
             let object = intersects[0].object;
-            while (object && !object.userData.userId) {
+            
+            // Check for sacred geometry first
+            while (object && !object.userData.isSacredGeometry && !object.userData.userId) {
                 object = object.parent;
             }
             
+            // Handle sacred geometry click
+            if (object && object.userData.isSacredGeometry) {
+                const geometryId = object.userData.sacredGeometryId;
+                if (geometryId && this.onSacredGeometryClicked) {
+                    this.onSacredGeometryClicked(geometryId);
+                }
+                return;
+            }
+            
+            // Handle user click
             if (object && object.userData.userId) {
                 const userId = object.userData.userId;
                 

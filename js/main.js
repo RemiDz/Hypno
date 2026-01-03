@@ -65,6 +65,7 @@ class HypnoApp {
             // Setup scene callbacks
             this.scene.onUserClicked = this.onUserClicked.bind(this);
             this.scene.onSelfClicked = this.onSelfClicked.bind(this);
+            this.scene.onSacredGeometryClicked = this.onSacredGeometryClicked.bind(this);
             
             // Throttled position update (every 100ms)
             this.scene.onPositionChanged = throttle((newPos) => {
@@ -589,6 +590,153 @@ class HypnoApp {
     
     onSelfClicked() {
         this.ui.openSelfMenu();
+    }
+    
+    async onSacredGeometryClicked(geometryId) {
+        console.log('🌌 Sacred Geometry clicked:', geometryId);
+        
+        // Get the geometry data from Firebase
+        const geometryData = await this.firebase.getSacredGeometry(geometryId);
+        if (!geometryData) {
+            console.log('🌌 Sacred Geometry not found');
+            return;
+        }
+        
+        // Open the info modal
+        this.openSacredGeometryInfo(geometryId, geometryData);
+    }
+    
+    openSacredGeometryInfo(geometryId, geometryData) {
+        const modal = document.getElementById('sg-info-modal');
+        if (!modal) return;
+        
+        // Get main intention data
+        const mainIntention = geometryData.mainIntention || 'observer';
+        const intentionData = window.HypnoClasses?.INTENTIONS?.[mainIntention] || 
+                              { icon: '◯', color: '#FFFFFF' };
+        
+        // Import INTENTIONS from config
+        import('./config.js').then(({ INTENTIONS }) => {
+            const intention = INTENTIONS[mainIntention] || INTENTIONS.observer;
+            
+            // Set intention icon and name
+            const intentionIcon = document.getElementById('sg-info-intention-icon');
+            const intentionName = document.getElementById('sg-info-intention-name');
+            
+            if (intentionIcon) {
+                intentionIcon.textContent = intention.icon;
+                intentionIcon.style.color = intention.color;
+            }
+            if (intentionName) {
+                intentionName.textContent = mainIntention.charAt(0).toUpperCase() + mainIntention.slice(1);
+                intentionName.style.color = intention.color;
+            }
+            
+            // Set age
+            const ageEl = document.getElementById('sg-info-age');
+            if (ageEl && geometryData.createdAt) {
+                ageEl.textContent = this.formatTimeAgo(geometryData.createdAt);
+            }
+            
+            // Set member counts
+            const members = geometryData.members || {};
+            const activeMembers = Object.values(members).filter(m => !m.pending);
+            
+            const activeMembersEl = document.getElementById('sg-info-active-members');
+            const totalMembersEl = document.getElementById('sg-info-total-members');
+            
+            if (activeMembersEl) {
+                activeMembersEl.textContent = activeMembers.length;
+            }
+            if (totalMembersEl) {
+                totalMembersEl.textContent = geometryData.totalMembersEver || activeMembers.length;
+            }
+            
+            // Set members list
+            const membersList = document.getElementById('sg-info-members-list');
+            if (membersList) {
+                membersList.innerHTML = '';
+                activeMembers.forEach(member => {
+                    const memberIntention = INTENTIONS[member.intention] || INTENTIONS.observer;
+                    const memberEl = document.createElement('div');
+                    memberEl.className = 'sg-info-member';
+                    memberEl.innerHTML = `
+                        <span class="sg-info-member-icon" style="color: ${memberIntention.color}">${memberIntention.icon}</span>
+                        <span>${member.nickname || 'Anonymous'}</span>
+                    `;
+                    membersList.appendChild(memberEl);
+                });
+            }
+            
+            // Set creator
+            const creatorEl = document.getElementById('sg-info-creator-name');
+            if (creatorEl) {
+                creatorEl.textContent = geometryData.creatorNickname || 'Anonymous';
+            }
+            
+            // Configure join button
+            const joinBtn = document.getElementById('sg-join-btn');
+            const joinNote = document.getElementById('sg-join-note');
+            
+            if (joinBtn && joinNote) {
+                // Check if user is already in this geometry
+                const isInThisGeometry = this.selfData?.sacredGeometryId === geometryId;
+                // Check if user is in any geometry
+                const isInAnyGeometry = !!this.selfData?.sacredGeometryId;
+                
+                if (isInThisGeometry) {
+                    joinBtn.disabled = true;
+                    joinBtn.querySelector('.button-text').textContent = '✧ YOU ARE HERE ✧';
+                    joinNote.textContent = 'You are a member of this Sacred Geometry';
+                } else if (isInAnyGeometry) {
+                    joinBtn.disabled = true;
+                    joinBtn.querySelector('.button-text').textContent = '✧ JOIN THIS GEOMETRY ✧';
+                    joinNote.textContent = 'Leave your current geometry first to join another';
+                } else {
+                    joinBtn.disabled = false;
+                    joinBtn.querySelector('.button-text').textContent = '✧ JOIN THIS GEOMETRY ✧';
+                    joinNote.textContent = '';
+                    
+                    // Set up click handler
+                    joinBtn.onclick = async () => {
+                        await this.firebase.joinSacredGeometry(geometryId);
+                        this.selfData = await this.firebase.getSelfData();
+                        this.currentSacredGeometry = this.sacredGeometryManager.getGeometry(geometryId);
+                        this.showSacredGeometryPanel();
+                        
+                        // Close modal
+                        modal.classList.remove('visible');
+                        modal.classList.add('hidden');
+                        
+                        // Move to geometry
+                        await this.moveSelfToSacredGeometry(geometryId);
+                    };
+                }
+            }
+            
+            // Show modal
+            modal.classList.remove('hidden');
+            modal.classList.add('visible');
+        });
+    }
+    
+    formatTimeAgo(timestamp) {
+        const now = Date.now();
+        const diff = now - timestamp;
+        
+        const minutes = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days = Math.floor(diff / 86400000);
+        
+        if (days > 0) {
+            return days === 1 ? '1 day ago' : `${days} days ago`;
+        } else if (hours > 0) {
+            return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+        } else if (minutes > 0) {
+            return minutes === 1 ? '1 minute ago' : `${minutes} minutes ago`;
+        } else {
+            return 'Just now';
+        }
     }
     
     showError(message) {

@@ -131,6 +131,56 @@
         </div>
     </div>
     
+    <!-- Sacred Geometry Info Modal (for exploring other geometries) -->
+    <div id="sg-info-modal" class="modal-overlay hidden">
+        <div class="modal sg-info-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">✡ Sacred Geometry</h2>
+                <button class="close-btn" data-close="sg-info-modal">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="sg-info-intention">
+                    <span class="sg-info-icon" id="sg-info-intention-icon">●</span>
+                    <span class="sg-info-intention-name" id="sg-info-intention-name">Peace</span>
+                </div>
+                
+                <div class="sg-info-stats">
+                    <div class="sg-info-stat">
+                        <span class="sg-stat-label">Created</span>
+                        <span class="sg-stat-value" id="sg-info-age">2 hours ago</span>
+                    </div>
+                    <div class="sg-info-stat">
+                        <span class="sg-stat-label">Active Members</span>
+                        <span class="sg-stat-value" id="sg-info-active-members">2</span>
+                    </div>
+                    <div class="sg-info-stat">
+                        <span class="sg-stat-label">Total Souls Joined</span>
+                        <span class="sg-stat-value" id="sg-info-total-members">5</span>
+                    </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="sg-info-members-section">
+                    <label>Current Members:</label>
+                    <div class="sg-info-members-list" id="sg-info-members-list">
+                        <!-- Members listed here -->
+                    </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <p class="sg-info-creator">Created by <span id="sg-info-creator-name">Anonymous</span></p>
+                
+                <button class="cosmic-button sg-join-btn" id="sg-join-btn">
+                    <span class="button-text">✧ JOIN THIS GEOMETRY ✧</span>
+                </button>
+                <p class="sg-join-note" id="sg-join-note"></p>
+            </div>
+        </div>
+    </div>
+
     <!-- Sacred Geometry Active Panel -->
     <div id="sg-active-panel" class="sg-active-panel hidden">
         <div class="sg-panel-header">
