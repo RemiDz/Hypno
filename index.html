@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="HYPNO - A cosmic consciousness network where souls connect across the infinite void">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <title>HYPNO | Cosmic Consciousness Network</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="assets/icons/icon.svg">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="cosmic-loader">
+                <div class="orbit-ring"></div>
+                <div class="orbit-ring"></div>
+                <div class="orbit-ring"></div>
+            </div>
+            <p class="loading-text">Entering the cosmic field...</p>
+        </div>
+    </div>
+
+    <!-- Welcome Modal -->
+    <div id="welcome-modal" class="modal-overlay hidden">
+        <div class="modal welcome-modal">
+            <div class="modal-glow"></div>
+            <h1 class="welcome-title">✧ Welcome to the Cosmos ✧</h1>
+            <p class="welcome-subtitle">You are about to join souls from across the world<br>in an infinite space of connection.</p>
+            
+            <div class="form-group">
+                <label for="nickname-input">Choose your name for this journey:</label>
+                <input type="text" id="nickname-input" class="cosmic-input" placeholder="Anonymous Wanderer" maxlength="24">
+            </div>
+            
+            <div class="form-group">
+                <label for="note-input">Leave a note for others who find you (optional):</label>
+                <textarea id="note-input" class="cosmic-textarea" placeholder="What brings you to the void today?" maxlength="200"></textarea>
+            </div>
+            
+            <button id="enter-btn" class="cosmic-button">
+                <span class="button-glow"></span>
+                <span class="button-text">ENTER THE VOID</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div id="universe-container"></div>
+
+    <!-- Souls Counter -->
+    <div id="souls-counter" class="souls-counter">✧ 0 souls connected ✧</div>
+
+    <!-- Menu Button -->
+    <button id="menu-btn" class="menu-btn hidden">
+        <span class="menu-icon">☰</span>
+        <span class="menu-text">MENU</span>
+    </button>
+
+    <!-- Return to Self Button -->
+    <button id="return-btn" class="return-btn hidden">
+        <span class="return-icon">◉</span>
+        <span class="return-text">Return to Self</span>
+    </button>
+
+    <!-- Self Menu Modal -->
+    <div id="self-menu" class="modal-overlay hidden">
+        <div class="modal self-menu-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">YOUR PRESENCE</h2>
+                <button class="close-btn" data-close="self-menu">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Nickname:</label>
+                    <div class="editable-field">
+                        <input type="text" id="self-nickname" class="cosmic-input" maxlength="24">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Your Note:</label>
+                    <textarea id="self-note" class="cosmic-textarea" maxlength="200"></textarea>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="section">
+                    <label>INTENTION (changes your shape):</label>
+                    <div class="intention-grid" id="intention-grid">
+                        <button class="intention-btn" data-intention="observer" title="Watching, learning, being present">
+                            <span class="intention-icon">◯</span>
+                            <span class="intention-name">Observer</span>
+                        </button>
+                        <button class="intention-btn" data-intention="peace" title="Seeking tranquility and calm">
+                            <span class="intention-icon">●</span>
+                            <span class="intention-name">Peace</span>
+                        </button>
+                        <button class="intention-btn" data-intention="love" title="Radiating and seeking love">
+                            <span class="intention-icon">♥</span>
+                            <span class="intention-name">Love</span>
+                        </button>
+                        <button class="intention-btn" data-intention="clarity" title="Pursuing truth and understanding">
+                            <span class="intention-icon">◆</span>
+                            <span class="intention-name">Clarity</span>
+                        </button>
+                        <button class="intention-btn" data-intention="creativity" title="Channeling creative energy">
+                            <span class="intention-icon">★</span>
+                            <span class="intention-name">Creative</span>
+                        </button>
+                        <button class="intention-btn" data-intention="transcendence" title="Rising beyond the ordinary">
+                            <span class="intention-icon">∿</span>
+                            <span class="intention-name">Transcend</span>
+                        </button>
+                        <button class="intention-btn" data-intention="transformation" title="Embracing change and rebirth">
+                            <span class="intention-icon">🔥</span>
+                            <span class="intention-name">Transform</span>
+                        </button>
+                        <button class="intention-btn" data-intention="healing" title="Restoring and nurturing">
+                            <span class="intention-icon">✿</span>
+                            <span class="intention-name">Heal</span>
+                        </button>
+                        <button class="intention-btn" data-intention="wisdom" title="Seeking deeper knowledge">
+                            <span class="intention-icon">△</span>
+                            <span class="intention-name">Wisdom</span>
+                        </button>
+                        <button class="intention-btn" data-intention="unity" title="Connecting all as one">
+                            <span class="intention-icon">∞</span>
+                            <span class="intention-name">Unity</span>
+                        </button>
+                    </div>
+                    <p class="current-selection" id="current-intention">Currently: ◯ Observer (Orbit shape)</p>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="section">
+                    <label>EMOTION (adds visual effect):</label>
+                    <div class="emotion-grid" id="emotion-grid">
+                        <button class="emotion-btn" data-emotion="neutral" title="Balanced, centered">
+                            <span class="emotion-icon">😐</span>
+                            <span class="emotion-name">Neutral</span>
+                        </button>
+                        <button class="emotion-btn" data-emotion="joyful" title="Radiating happiness">
+                            <span class="emotion-icon">😊</span>
+                            <span class="emotion-name">Joyful</span>
+                        </button>
+                        <button class="emotion-btn" data-emotion="sad" title="Processing sorrow">
+                            <span class="emotion-icon">😢</span>
+                            <span class="emotion-name">Sad</span>
+                        </button>
+                        <button class="emotion-btn" data-emotion="anxious" title="Feeling unsettled">
+                            <span class="emotion-icon">😰</span>
+                            <span class="emotion-name">Anxious</span>
+                        </button>
+                        <button class="emotion-btn" data-emotion="hopeful" title="Looking toward light">
+                            <span class="emotion-icon">🌱</span>
+                            <span class="emotion-name">Hopeful</span>
+                        </button>
+                        <button class="emotion-btn" data-emotion="grateful" title="Filled with thanks">
+                            <span class="emotion-icon">🙏</span>
+                            <span class="emotion-name">Grateful</span>
+                        </button>
+                        <button class="emotion-btn" data-emotion="curious" title="Seeking to understand">
+                            <span class="emotion-icon">🤔</span>
+                            <span class="emotion-name">Curious</span>
+                        </button>
+                        <button class="emotion-btn" data-emotion="peaceful" title="Deep serenity">
+                            <span class="emotion-icon">😌</span>
+                            <span class="emotion-name">Peaceful</span>
+                        </button>
+                        <button class="emotion-btn" data-emotion="energized" title="Charged with vitality">
+                            <span class="emotion-icon">⚡</span>
+                            <span class="emotion-name">Energized</span>
+                        </button>
+                        <button class="emotion-btn" data-emotion="contemplative" title="Deep in thought">
+                            <span class="emotion-icon">💭</span>
+                            <span class="emotion-name">Contemplative</span>
+                        </button>
+                    </div>
+                    <p class="current-selection" id="current-emotion">Currently: 😐 Neutral</p>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="stats-row">
+                    <div class="stat">
+                        <span class="stat-icon">⏱️</span>
+                        <span class="stat-label">Connected for:</span>
+                        <span class="stat-value" id="self-connection-time">0s</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-icon">👥</span>
+                        <span class="stat-label">Resonating with:</span>
+                        <span class="stat-value" id="self-resonance-count">0 souls</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Other User Menu Modal -->
+    <div id="user-menu" class="modal-overlay hidden">
+        <div class="modal user-menu-modal">
+            <div class="modal-header">
+                <button class="close-btn" data-close="user-menu">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="user-display">
+                    <h2 class="user-name" id="user-display-name">✧ StarSeeker ✧</h2>
+                    <div class="user-shape-preview" id="user-shape-preview"></div>
+                </div>
+                
+                <div class="user-info">
+                    <p class="user-intention" id="user-intention">Intention: 💜 Love</p>
+                    <p class="user-emotion" id="user-emotion">Emotion: 😊 Joyful</p>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div class="user-note-section">
+                    <label>Their Note:</label>
+                    <div class="user-note-box">
+                        <p id="user-note">"Finding love in unexpected places. Every connection is a gift from the universe. 💫"</p>
+                    </div>
+                </div>
+                
+                <div class="user-stat">
+                    <span class="stat-icon">⏱️</span>
+                    <span class="stat-label">Connected for:</span>
+                    <span class="stat-value" id="user-connection-time">1h 12m 45s</span>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <button class="resonate-btn" id="resonate-btn">
+                    <span class="resonate-icon">✧</span>
+                    <span class="resonate-text">RESONATE WITH THIS SOUL</span>
+                    <span class="resonate-icon">✧</span>
+                </button>
+                
+                <p class="resonance-status" id="resonance-status">Currently resonating: NO</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

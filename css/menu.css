@@ -1,0 +1,534 @@
+/* ============================================
+   HYPNO - Menu & Modal Styles
+   ============================================ */
+
+/* Modal Overlay */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    padding: var(--space-lg);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-normal), visibility var(--transition-normal);
+}
+
+.modal-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-overlay.hidden {
+    display: flex !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Modal Base */
+.modal {
+    position: relative;
+    max-width: 520px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: scale(0.95) translateY(20px);
+    transition: transform var(--transition-normal);
+}
+
+.modal-overlay.visible .modal {
+    transform: scale(1) translateY(0);
+}
+
+.modal-glow {
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, 
+        var(--peace) 0%, 
+        var(--love) 50%, 
+        var(--clarity) 100%);
+    border-radius: var(--radius-xl);
+    opacity: 0.15;
+    z-index: -1;
+    filter: blur(20px);
+    animation: glow-shift 10s ease-in-out infinite;
+}
+
+@keyframes glow-shift {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.25; }
+}
+
+/* Modal Header */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-lg) var(--space-xl);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.modal-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 400;
+    letter-spacing: 0.15em;
+    color: var(--star-white);
+}
+
+.close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    border-radius: 50%;
+    color: var(--star-dim);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--star-dim);
+    color: var(--star-white);
+}
+
+/* Modal Body */
+.modal-body {
+    padding: var(--space-xl);
+}
+
+/* Welcome Modal */
+.welcome-modal {
+    text-align: center;
+    padding: var(--space-2xl);
+}
+
+.welcome-title {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--space-md);
+    background: linear-gradient(135deg, var(--star-white), var(--peace));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.welcome-subtitle {
+    font-size: 1rem;
+    font-weight: 300;
+    color: var(--star-dim);
+    line-height: 1.6;
+    margin-bottom: var(--space-xl);
+}
+
+/* Form Elements */
+.form-group {
+    margin-bottom: var(--space-lg);
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--star-dim);
+    margin-bottom: var(--space-sm);
+}
+
+.cosmic-input,
+.cosmic-textarea {
+    width: 100%;
+    padding: var(--space-md);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    color: var(--star-white);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 300;
+    transition: all var(--transition-fast);
+}
+
+.cosmic-input::placeholder,
+.cosmic-textarea::placeholder {
+    color: var(--star-faint);
+}
+
+.cosmic-input:focus,
+.cosmic-textarea:focus {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--peace);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+
+.cosmic-textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Cosmic Button */
+.cosmic-button {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md) var(--space-2xl);
+    margin-top: var(--space-lg);
+    background: linear-gradient(135deg, var(--peace) 0%, var(--love) 100%);
+    border: none;
+    border-radius: var(--radius-xl);
+    color: white;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all var(--transition-normal);
+}
+
+.cosmic-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+}
+
+.cosmic-button:active {
+    transform: translateY(0);
+}
+
+.button-glow {
+    position: absolute;
+    inset: -50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.cosmic-button:hover .button-glow {
+    opacity: 1;
+    animation: shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Divider */
+.divider {
+    height: 1px;
+    background: var(--glass-border);
+    margin: var(--space-lg) 0;
+}
+
+/* Section */
+.section {
+    margin-bottom: var(--space-lg);
+}
+
+.section > label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--star-dim);
+    margin-bottom: var(--space-md);
+    text-transform: uppercase;
+}
+
+/* Intention Grid */
+.intention-grid,
+.emotion-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.intention-btn,
+.emotion-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm) var(--space-xs);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    color: var(--star-dim);
+    font-size: 0.625rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.intention-btn:hover,
+.emotion-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--star-white);
+}
+
+.intention-btn.active,
+.emotion-btn.active {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: var(--peace);
+    color: var(--star-white);
+}
+
+.intention-icon,
+.emotion-icon {
+    font-size: 1.25rem;
+}
+
+.intention-name,
+.emotion-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* Intention color indicators */
+.intention-btn[data-intention="observer"]:hover,
+.intention-btn[data-intention="observer"].active { border-color: var(--observer); }
+.intention-btn[data-intention="peace"]:hover,
+.intention-btn[data-intention="peace"].active { border-color: var(--peace); }
+.intention-btn[data-intention="love"]:hover,
+.intention-btn[data-intention="love"].active { border-color: var(--love); }
+.intention-btn[data-intention="clarity"]:hover,
+.intention-btn[data-intention="clarity"].active { border-color: var(--clarity); }
+.intention-btn[data-intention="creativity"]:hover,
+.intention-btn[data-intention="creativity"].active { border-color: var(--creativity); }
+.intention-btn[data-intention="transcendence"]:hover,
+.intention-btn[data-intention="transcendence"].active { border-color: var(--transcendence); }
+.intention-btn[data-intention="transformation"]:hover,
+.intention-btn[data-intention="transformation"].active { border-color: var(--transformation); }
+.intention-btn[data-intention="healing"]:hover,
+.intention-btn[data-intention="healing"].active { border-color: var(--healing); }
+.intention-btn[data-intention="wisdom"]:hover,
+.intention-btn[data-intention="wisdom"].active { border-color: var(--wisdom); }
+.intention-btn[data-intention="unity"]:hover,
+.intention-btn[data-intention="unity"].active { border-color: var(--unity); }
+
+/* Current Selection */
+.current-selection {
+    font-size: 0.875rem;
+    color: var(--star-dim);
+}
+
+/* Stats Row */
+.stats-row {
+    display: flex;
+    gap: var(--space-xl);
+    flex-wrap: wrap;
+}
+
+.stat {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 0.875rem;
+}
+
+.stat-icon {
+    font-size: 1rem;
+}
+
+.stat-label {
+    color: var(--star-dim);
+}
+
+.stat-value {
+    color: var(--star-white);
+    font-weight: 400;
+}
+
+/* User Menu */
+.user-menu-modal .modal-header {
+    justify-content: flex-end;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.user-display {
+    text-align: center;
+    margin-bottom: var(--space-lg);
+}
+
+.user-name {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--space-md);
+}
+
+.user-shape-preview {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+}
+
+.user-info {
+    text-align: center;
+    margin-bottom: var(--space-lg);
+}
+
+.user-intention,
+.user-emotion {
+    font-size: 0.875rem;
+    color: var(--star-dim);
+    margin-bottom: var(--space-xs);
+}
+
+.user-note-section {
+    margin-bottom: var(--space-lg);
+}
+
+.user-note-section label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: var(--star-dim);
+    margin-bottom: var(--space-sm);
+    text-transform: uppercase;
+}
+
+.user-note-box {
+    padding: var(--space-md);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+}
+
+.user-note-box p {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-style: italic;
+    color: var(--star-white);
+    line-height: 1.6;
+}
+
+.user-stat {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: 0.875rem;
+    margin-bottom: var(--space-lg);
+}
+
+/* Resonate Button */
+.resonate-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    width: 100%;
+    padding: var(--space-md) var(--space-lg);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    color: var(--star-white);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+}
+
+.resonate-btn:hover {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.4) 0%, rgba(236, 72, 153, 0.4) 100%);
+    border-color: var(--peace);
+    transform: scale(1.02);
+}
+
+.resonate-btn.active {
+    background: linear-gradient(135deg, var(--peace) 0%, var(--love) 100%);
+    border-color: transparent;
+}
+
+.resonate-icon {
+    animation: twinkle 2s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.5; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1.1); }
+}
+
+.resonance-status {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--star-faint);
+    margin-top: var(--space-md);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .modal-overlay {
+        padding: var(--space-md);
+        align-items: flex-end;
+    }
+    
+    .modal {
+        max-height: 85vh;
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    }
+    
+    .welcome-modal {
+        padding: var(--space-xl);
+    }
+    
+    .welcome-title {
+        font-size: 1.5rem;
+    }
+    
+    .intention-grid,
+    .emotion-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+    }
+    
+    .intention-btn,
+    .emotion-btn {
+        padding: var(--space-xs);
+    }
+    
+    .intention-icon,
+    .emotion-icon {
+        font-size: 1rem;
+    }
+    
+    .intention-name,
+    .emotion-name {
+        font-size: 0.5rem;
+    }
+    
+    .stats-row {
+        flex-direction: column;
+        gap: var(--space-md);
+    }
+}
