@@ -756,15 +756,10 @@ export class CosmicScene {
             userShape.animate(delta, elapsed);
         });
         
-        // Update all connections (from connection manager)
+        // Update all connections (from connection manager only)
         if (this.connectionManager) {
             this.connectionManager.animate(delta, elapsed);
         }
-        
-        // Also update any scene-level connections
-        this.connections.forEach(connection => {
-            connection.animate(delta, elapsed);
-        });
         
         // Update label orientations to face camera
         this.users.forEach(userShape => {

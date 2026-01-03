@@ -64,9 +64,24 @@ export class ConnectionManager {
         const fromUser = this.users.get(fromId);
         const toUser = this.users.get(toId);
         
-        if (!fromUser || !toUser) return;
+        if (!fromUser || !toUser) {
+            console.log('🌌 Cannot create connection - user not found:', fromId, toId);
+            return;
+        }
+        
+        // Validate user groups exist
+        if (!fromUser.group || !toUser.group) {
+            console.log('🌌 Cannot create connection - user group not found');
+            return;
+        }
         
         const connId = this.getConnectionId(fromId, toId);
+        
+        // Double-check we don't already have this connection
+        if (this.connections.has(connId)) {
+            console.log('🌌 Connection already exists:', connId);
+            return;
+        }
         
         const thread = new ConnectionThread(
             fromUser,
@@ -76,6 +91,7 @@ export class ConnectionManager {
         );
         
         this.connections.set(connId, thread);
+        console.log('🌌 Created connection:', connId);
     }
     
     removeConnection(connId) {
@@ -129,7 +145,6 @@ export class ConnectionThread {
         this.group = new THREE.Group();
         this.line = null;
         this.particles = null;
-        this.glowLine = null;
         
         this.create();
     }
@@ -159,6 +174,11 @@ export class ConnectionThread {
     }
     
     updateCurve() {
+        // Validate that users still exist
+        if (!this.fromUser || !this.fromUser.group || !this.toUser || !this.toUser.group) {
+            return;
+        }
+        
         // Get CURRENT positions from user groups
         const startPos = this.fromUser.group.position.clone();
         const endPos = this.toUser.group.position.clone();
@@ -176,12 +196,6 @@ export class ConnectionThread {
             // Dispose old geometry and create new one (more reliable than updating)
             this.line.geometry.dispose();
             this.line.geometry = new THREE.BufferGeometry().setFromPoints(points);
-            
-            // Also update glow line
-            if (this.glowLine && this.glowLine.geometry) {
-                this.glowLine.geometry.dispose();
-                this.glowLine.geometry = new THREE.BufferGeometry().setFromPoints(points);
-            }
         } else {
             // Create new line
             const geometry = new THREE.BufferGeometry().setFromPoints(points);
@@ -196,20 +210,6 @@ export class ConnectionThread {
             
             this.line = new THREE.Line(geometry, material);
             this.group.add(this.line);
-            
-            // Create glow line (thicker, more transparent)
-            const glowGeometry = new THREE.BufferGeometry().setFromPoints(points);
-            const glowMaterial = new THREE.LineBasicMaterial({
-                color: this.fromColor,
-                transparent: true,
-                opacity: 0.1,
-                blending: THREE.AdditiveBlending
-            });
-            glowMaterial.userData.targetOpacity = 0.1;
-            
-            this.glowLine = new THREE.Line(glowGeometry, glowMaterial);
-            this.glowLine.scale.setScalar(1.5);
-            this.group.add(this.glowLine);
         }
         
         // Store curve for particle animation
@@ -284,16 +284,15 @@ export class ConnectionThread {
             });
         }
         
-        if (this.glowLine) {
-            gsap.to(this.glowLine.material, {
-                opacity: isMutual ? 0.25 : 0.1,
-                duration: 0.3
-            });
-        }
     }
     
     animate(delta, elapsed) {
         if (this.isDisposing) return;
+        
+        // Validate users still exist before animating
+        if (!this.fromUser || !this.fromUser.group || !this.toUser || !this.toUser.group) {
+            return;
+        }
         
         // Update curve positions (users might have moved)
         this.updateCurve();
@@ -360,11 +359,6 @@ export class ConnectionThread {
         if (this.line) {
             this.line.geometry.dispose();
             this.line.material.dispose();
-        }
-        
-        if (this.glowLine) {
-            this.glowLine.geometry.dispose();
-            this.glowLine.material.dispose();
         }
         
         if (this.particles) {
