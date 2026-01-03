@@ -316,6 +316,7 @@ class HypnoApp {
         const geometryData = await this.firebase.getSacredGeometry(geometryId);
         if (!geometryData || !geometryData.center) return;
         
+        const center = geometryData.center;
         const members = Object.keys(geometryData.members || {});
         const myIndex = members.indexOf(this.selfId);
         
@@ -338,7 +339,44 @@ class HypnoApp {
                 // Update in Firebase
                 this.firebase.updatePosition(newPos.x, newPos.y, newPos.z);
             }
+            
+            // Cinematic zoom: Center camera on the sacred geometry
+            this.zoomToSacredGeometry(center, members.length);
         }
+    }
+    
+    zoomToSacredGeometry(center, memberCount) {
+        if (!this.scene || !this.scene.controls) return;
+        
+        // Calculate zoom distance based on member count (further out for more members)
+        const baseDistance = 80;
+        const distancePerMember = 15;
+        const targetDistance = baseDistance + memberCount * distancePerMember;
+        
+        // Animate camera target to geometry center
+        gsap.to(this.scene.controls.target, {
+            x: center.x,
+            y: center.y,
+            z: center.z,
+            duration: 2.5,
+            ease: 'power2.inOut',
+            onUpdate: () => {
+                this.scene.updateCameraFromControls();
+            }
+        });
+        
+        // Animate zoom distance
+        gsap.to(this.scene.controls.spherical, {
+            radius: targetDistance,
+            duration: 2.5,
+            ease: 'power2.inOut',
+            onUpdate: () => {
+                this.scene.updateCameraFromControls();
+            }
+        });
+        
+        // Disable auto-rotate during the cinematic zoom
+        this.scene.controls.autoRotate = false;
     }
     
     onSacredGeometryCreated(geometryId, geometryData) {
