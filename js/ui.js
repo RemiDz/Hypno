@@ -188,10 +188,11 @@ export class UIManager {
             });
         }
         
-        // Show mobile joystick on mobile devices
+        // Show mobile joystick ONLY on mobile devices
         const mobileJoystick = document.getElementById('mobile-joystick');
         if (mobileJoystick && this.isMobile()) {
             mobileJoystick.classList.remove('hidden');
+            mobileJoystick.classList.add('visible');
             
             gsap.from(mobileJoystick, {
                 scale: 0,

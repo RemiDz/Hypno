@@ -388,20 +388,22 @@ html, body {
     .controls-hint {
         display: none !important;
     }
-    
-    .mobile-joystick {
-        display: flex !important;
-    }
 }
 
-/* Mobile Joystick */
+/* Mobile Joystick - ONLY show on mobile via media query */
 .mobile-joystick {
-    display: none;
+    display: none !important;
     position: fixed;
     bottom: 100px;
     left: 30px;
     z-index: 150;
     touch-action: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-joystick.visible {
+        display: flex !important;
+    }
 }
 
 .mobile-joystick.hidden {

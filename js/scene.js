@@ -584,6 +584,12 @@ export class CosmicScene {
     
     // User management
     addUser(userId, userData, isSelf = false) {
+        // Prevent duplicates
+        if (this.users.has(userId)) {
+            console.log('🌌 Scene: User already exists, skipping:', userId);
+            return this.users.get(userId);
+        }
+        
         const { UserShape } = window.HypnoClasses;
         const userShape = new UserShape(userId, userData, isSelf, this.scene, this.camera);
         

@@ -112,24 +112,28 @@ class HypnoApp {
         console.log('🌌 Entering the void as:', nickname);
         
         try {
-            // Connect to Firebase with initial data
-            this.selfData = await this.firebase.connect({ nickname, note });
+            // Get session ID first
             this.selfId = this.firebase.getSessionId();
             
-            // Create self representation in scene
-            const selfShape = this.scene.addUser(this.selfId, this.selfData, true);
-            this.users.set(this.selfId, this.selfData);
+            // Set scene self ID early to prevent duplicates
+            this.scene.selfId = this.selfId;
             
-            // Load existing users
+            // Load existing users BEFORE connecting (to avoid race condition)
             const existingUsers = await this.firebase.getAllUsers();
             console.log('🌌 Found', existingUsers.length, 'other souls');
             
             existingUsers.forEach(({ id, data }) => {
+                // Skip if it's somehow our old session
+                if (id === this.selfId) return;
                 this.addUser(id, data);
             });
             
-            // Set scene self ID
-            this.scene.selfId = this.selfId;
+            // Connect to Firebase with initial data
+            this.selfData = await this.firebase.connect({ nickname, note });
+            
+            // Create self representation in scene
+            const selfShape = this.scene.addUser(this.selfId, this.selfData, true);
+            this.users.set(this.selfId, this.selfData);
             
         } catch (error) {
             console.error('🌌 Failed to enter:', error);
@@ -138,9 +142,26 @@ class HypnoApp {
     }
     
     addUser(userId, userData) {
-        if (userId === this.selfId) return;
-        if (this.users.has(userId)) return;
+        // Skip self
+        if (userId === this.selfId) {
+            console.log('🌌 Skipping self user:', userId);
+            return;
+        }
         
+        // Skip if already exists
+        if (this.users.has(userId)) {
+            console.log('🌌 User already exists, updating:', userId);
+            this.updateUser(userId, userData);
+            return;
+        }
+        
+        // Skip if already in scene
+        if (this.scene.users.has(userId)) {
+            console.log('🌌 User already in scene:', userId);
+            return;
+        }
+        
+        console.log('🌌 Adding new user:', userId, userData.nickname);
         this.users.set(userId, userData);
         this.scene.addUser(userId, userData, false);
         
