@@ -164,9 +164,24 @@
     border-radius: var(--radius-md);
     color: var(--star-white);
     font-family: var(--font-body);
-    font-size: 1rem;
+    font-size: 16px;  /* Prevents iOS zoom on focus */
     font-weight: 300;
     transition: all var(--transition-fast);
+    /* Mobile Safari fixes */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* Ensure input text is visible on all devices */
+.cosmic-input,
+.cosmic-textarea,
+.cosmic-input::placeholder,
+.cosmic-textarea::placeholder {
+    -webkit-text-fill-color: currentcolor;
+    opacity: 1;
 }
 
 .cosmic-input::placeholder,
@@ -176,9 +191,10 @@
 
 .cosmic-input:focus,
 .cosmic-textarea:focus {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.12);
     border-color: var(--peace);
     box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+    outline: none;
 }
 
 .cosmic-textarea {
@@ -502,15 +518,34 @@
     .modal-overlay {
         padding: var(--space-md);
         align-items: flex-end;
+        /* Fix for iOS backdrop-filter issues with inputs */
+        -webkit-backdrop-filter: blur(3px);
+        backdrop-filter: blur(3px);
     }
     
     .modal {
         max-height: 85vh;
         border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        /* Fix for iOS stacking context issues */
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
     }
     
     .welcome-modal {
         padding: var(--space-xl);
+    }
+    
+    /* Ensure form inputs work properly on mobile */
+    .welcome-modal .form-group {
+        position: relative;
+        z-index: 1;
+    }
+    
+    .welcome-modal .cosmic-input,
+    .welcome-modal .cosmic-textarea {
+        background: rgba(30, 30, 50, 0.9);
+        -webkit-user-select: text;
+        user-select: text;
     }
     
     .welcome-title {

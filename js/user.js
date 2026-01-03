@@ -105,12 +105,15 @@ export class UserShape {
         const spriteMaterial = new THREE.SpriteMaterial({
             map: texture,
             transparent: true,
-            opacity: 0.9
+            opacity: 0.9,
+            depthTest: false,  // Always render on top
+            depthWrite: false
         });
         
         this.label = new THREE.Sprite(spriteMaterial);
         this.label.scale.set(canvas.width / 40, canvas.height / 40, 1);
-        this.label.position.y = 4;
+        this.label.position.y = 8;  // Move higher above the shape
+        this.label.renderOrder = 999;  // Ensure it renders on top
         
         this.group.add(this.label);
         

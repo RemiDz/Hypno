@@ -141,7 +141,7 @@ function createHeart() {
     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
     geometry.center();
     geometry.scale(1.8, 1.8, 1.8);
-    geometry.rotateZ(Math.PI); // Flip so point is at bottom
+    // Heart shape is already correct - lobes at top, point at bottom
     
     return geometry;
 }
