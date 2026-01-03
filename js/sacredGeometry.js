@@ -54,6 +54,12 @@ export class SacredGeometryGroup {
         this.rotationSpeed = 0.0003;
         this.pulsePhase = Math.random() * Math.PI * 2;
         
+        // Orbital animation for members
+        this.orbitSpeed = 0.15; // Radians per second
+        this.orbitRadius = 35;
+        this.orbitAngle = 0;
+        this.memberIds = []; // Track member user IDs for orbital animation
+        
         this.init();
     }
     
@@ -70,6 +76,10 @@ export class SacredGeometryGroup {
         // Store geometry ID for click detection
         this.group.userData.sacredGeometryId = this.id;
         this.group.userData.isSacredGeometry = true;
+        
+        // Initialize member list for orbital animation
+        this.updateMemberList();
+        this.orbitRadius = 35 + this.memberIds.length * 5;
         
         // Create the sacred geometry
         this.createSacredPattern();
@@ -1007,6 +1017,12 @@ export class SacredGeometryGroup {
         this.data = geometryData;
         const newMemberCount = Object.keys(geometryData.members || {}).length;
         
+        // Update member list for orbital animation
+        this.updateMemberList();
+        
+        // Update orbit radius based on member count
+        this.orbitRadius = 35 + newMemberCount * 5;
+        
         if (newMemberCount !== oldMemberCount) {
             this.rebuildGeometry();
             
@@ -1064,6 +1080,12 @@ export class SacredGeometryGroup {
         // Gentle rotation of the whole pattern
         this.group.rotation.z += this.rotationSpeed;
         
+        // Update orbit angle
+        this.orbitAngle += this.orbitSpeed * delta;
+        
+        // Animate members orbiting around the geometry
+        this.animateMemberOrbits(elapsed);
+        
         // Counter-rotate particles
         if (this.particles) {
             this.particles.rotation.z -= this.rotationSpeed * 2;
@@ -1099,6 +1121,62 @@ export class SacredGeometryGroup {
                 layer.material.opacity = Math.max(0.05, Math.min(1, baseOpacity + pulse));
             }
         });
+    }
+    
+    animateMemberOrbits(elapsed) {
+        if (!this.scene || !this.scene.users || !this.data.center) return;
+        
+        // Get active member IDs from geometry data
+        const members = this.data.members || {};
+        const activeMemberIds = Object.keys(members).filter(id => !members[id].pending);
+        
+        if (activeMemberIds.length === 0) return;
+        
+        const center = this.data.center;
+        const memberCount = activeMemberIds.length;
+        
+        // Calculate orbit radius based on member count
+        const radius = this.orbitRadius + memberCount * 5;
+        
+        // Animate each member
+        activeMemberIds.forEach((memberId, index) => {
+            const userShape = this.scene.users.get(memberId);
+            if (!userShape || !userShape.group) return;
+            
+            // Calculate position on orbit
+            // Each member is evenly spaced, plus the global orbit angle
+            const angleOffset = (index / memberCount) * Math.PI * 2;
+            const angle = this.orbitAngle + angleOffset;
+            
+            // Add gentle vertical oscillation for cinematic effect
+            const verticalOffset = Math.sin(elapsed * 0.3 + index * 1.5) * 3;
+            
+            // Calculate target position
+            const targetX = center.x + Math.cos(angle) * radius;
+            const targetY = center.y + verticalOffset;
+            const targetZ = center.z + Math.sin(angle) * radius;
+            
+            // Smoothly interpolate to target position
+            const currentPos = userShape.group.position;
+            const lerpFactor = 0.05; // Smooth interpolation
+            
+            userShape.group.position.x += (targetX - currentPos.x) * lerpFactor;
+            userShape.group.position.y += (targetY - currentPos.y) * lerpFactor;
+            userShape.group.position.z += (targetZ - currentPos.z) * lerpFactor;
+            
+            // Update data position as well
+            userShape.data.position = {
+                x: userShape.group.position.x,
+                y: userShape.group.position.y,
+                z: userShape.group.position.z
+            };
+        });
+    }
+    
+    // Update member list when geometry data changes
+    updateMemberList() {
+        const members = this.data.members || {};
+        this.memberIds = Object.keys(members).filter(id => !members[id].pending);
     }
     
     fadeOut(callback) {
