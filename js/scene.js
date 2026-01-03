@@ -30,10 +30,22 @@ export class CosmicScene {
         // Callbacks
         this.onUserClicked = null;
         this.onSelfClicked = null;
+        this.onPositionChanged = null;
         
         // Performance optimization
         this.isMobile = isMobile();
         this.particleCount = this.isMobile ? 2000 : 5000;
+        
+        // Movement controls
+        this.moveState = {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false,
+            up: false,
+            down: false
+        };
+        this.moveSpeed = 50; // Units per second
     }
     
     async init() {
@@ -196,6 +208,141 @@ export class CosmicScene {
                 this.resumeAnimation();
             }
         });
+        
+        // Keyboard controls for movement
+        document.addEventListener('keydown', this.onKeyDown.bind(this));
+        document.addEventListener('keyup', this.onKeyUp.bind(this));
+    }
+    
+    onKeyDown(event) {
+        // Ignore if typing in input
+        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        
+        switch (event.code) {
+            case 'KeyW':
+            case 'ArrowUp':
+                this.moveState.forward = true;
+                break;
+            case 'KeyS':
+            case 'ArrowDown':
+                this.moveState.backward = true;
+                break;
+            case 'KeyA':
+            case 'ArrowLeft':
+                this.moveState.left = true;
+                break;
+            case 'KeyD':
+            case 'ArrowRight':
+                this.moveState.right = true;
+                break;
+            case 'KeyQ':
+            case 'Space':
+                this.moveState.up = true;
+                break;
+            case 'KeyE':
+            case 'ShiftLeft':
+            case 'ShiftRight':
+                this.moveState.down = true;
+                break;
+        }
+        
+        // Stop auto-rotate when user is controlling
+        if (Object.values(this.moveState).some(v => v)) {
+            this.controls.autoRotate = false;
+        }
+    }
+    
+    onKeyUp(event) {
+        switch (event.code) {
+            case 'KeyW':
+            case 'ArrowUp':
+                this.moveState.forward = false;
+                break;
+            case 'KeyS':
+            case 'ArrowDown':
+                this.moveState.backward = false;
+                break;
+            case 'KeyA':
+            case 'ArrowLeft':
+                this.moveState.left = false;
+                break;
+            case 'KeyD':
+            case 'ArrowRight':
+                this.moveState.right = false;
+                break;
+            case 'KeyQ':
+            case 'Space':
+                this.moveState.up = false;
+                break;
+            case 'KeyE':
+            case 'ShiftLeft':
+            case 'ShiftRight':
+                this.moveState.down = false;
+                break;
+        }
+    }
+    
+    updateMovement(delta) {
+        if (!this.selfShape) return;
+        
+        const isMoving = Object.values(this.moveState).some(v => v);
+        if (!isMoving) return;
+        
+        // Get camera direction (ignoring Y for horizontal movement)
+        const cameraDirection = new THREE.Vector3();
+        this.camera.getWorldDirection(cameraDirection);
+        cameraDirection.y = 0;
+        cameraDirection.normalize();
+        
+        // Get right vector
+        const rightVector = new THREE.Vector3();
+        rightVector.crossVectors(cameraDirection, new THREE.Vector3(0, 1, 0)).normalize();
+        
+        // Calculate movement
+        const movement = new THREE.Vector3();
+        const speed = this.moveSpeed * delta;
+        
+        if (this.moveState.forward) {
+            movement.add(cameraDirection.clone().multiplyScalar(speed));
+        }
+        if (this.moveState.backward) {
+            movement.add(cameraDirection.clone().multiplyScalar(-speed));
+        }
+        if (this.moveState.left) {
+            movement.add(rightVector.clone().multiplyScalar(-speed));
+        }
+        if (this.moveState.right) {
+            movement.add(rightVector.clone().multiplyScalar(speed));
+        }
+        if (this.moveState.up) {
+            movement.y += speed;
+        }
+        if (this.moveState.down) {
+            movement.y -= speed;
+        }
+        
+        // Apply movement to self shape
+        const currentPos = this.selfShape.getPosition();
+        const newPos = {
+            x: currentPos.x + movement.x,
+            y: currentPos.y + movement.y,
+            z: currentPos.z + movement.z
+        };
+        
+        // Update self shape position
+        this.selfShape.group.position.set(newPos.x, newPos.y, newPos.z);
+        this.selfShape.data.position = newPos;
+        
+        // Move camera target to follow
+        this.controls.target.set(newPos.x, newPos.y, newPos.z);
+        this.updateCameraFromControls();
+        
+        // Notify position change (throttled in main.js)
+        if (this.onPositionChanged) {
+            this.onPositionChanged(newPos);
+        }
     }
     
     onPointerDown(event) {
@@ -469,6 +616,9 @@ export class CosmicScene {
             this.controls.spherical.theta += this.controls.autoRotateSpeed * delta;
             this.updateCameraFromControls();
         }
+        
+        // Handle user movement (WASD/arrows)
+        this.updateMovement(delta);
         
         // Update all user shapes
         this.users.forEach(userShape => {

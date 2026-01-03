@@ -8,6 +8,7 @@ import { FirebaseSync } from './firebase.js';
 import { UIManager } from './ui.js';
 import { UserShape } from './user.js';
 import { ConnectionThread, ConnectionManager } from './connections.js';
+import { throttle } from './utils.js';
 
 // Make classes available globally for scene.js
 window.HypnoClasses = {
@@ -53,6 +54,15 @@ class HypnoApp {
             // Setup scene callbacks
             this.scene.onUserClicked = this.onUserClicked.bind(this);
             this.scene.onSelfClicked = this.onSelfClicked.bind(this);
+            
+            // Throttled position update (every 100ms)
+            this.scene.onPositionChanged = throttle((newPos) => {
+                this.firebase.updatePosition(newPos.x, newPos.y, newPos.z);
+                // Update local data
+                if (this.selfData) {
+                    this.selfData.position = newPos;
+                }
+            }, 100);
             
             // Setup Firebase callbacks
             this.setupFirebaseCallbacks();

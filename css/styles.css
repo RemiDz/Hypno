@@ -253,6 +253,55 @@ html, body {
     animation: pulse-glow 2s ease-in-out infinite;
 }
 
+/* Controls Hint */
+.controls-hint {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: var(--space-lg);
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 90;
+    opacity: 0.7;
+    transition: opacity var(--transition-normal);
+}
+
+.controls-hint:hover {
+    opacity: 1;
+}
+
+.controls-hint.hidden {
+    display: none !important;
+}
+
+.hint-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+}
+
+.hint-keys {
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: var(--star-white);
+}
+
+.hint-desc {
+    font-size: 0.7rem;
+    color: var(--star-dim);
+}
+
 @keyframes pulse-glow {
     0%, 100% { 
         text-shadow: 0 0 5px var(--peace);
@@ -329,5 +378,9 @@ html, body {
     .menu-text,
     .return-text {
         display: none;
+    }
+    
+    .controls-hint {
+        display: none !important;
     }
 }

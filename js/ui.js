@@ -140,6 +140,23 @@ export class UIManager {
         this.menuBtn.classList.remove('hidden');
         this.returnBtn.classList.remove('hidden');
         
+        // Show controls hint (only on desktop)
+        const controlsHint = document.getElementById('controls-hint');
+        if (controlsHint && !this.isMobile()) {
+            controlsHint.classList.remove('hidden');
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                gsap.to(controlsHint, {
+                    opacity: 0,
+                    duration: 1,
+                    onComplete: () => {
+                        controlsHint.classList.add('hidden');
+                    }
+                });
+            }, 10000);
+        }
+        
         // Animate in
         gsap.from(this.menuBtn, {
             y: 20,
@@ -161,6 +178,19 @@ export class UIManager {
             duration: 0.5,
             delay: 0.5
         });
+        
+        if (controlsHint && !this.isMobile()) {
+            gsap.from(controlsHint, {
+                y: 20,
+                opacity: 0,
+                duration: 0.5,
+                delay: 0.6
+            });
+        }
+    }
+    
+    isMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     }
     
     // ========================

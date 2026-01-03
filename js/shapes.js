@@ -86,33 +86,51 @@ function createSphere() {
 }
 
 /**
- * Heart (Love) - 3D heart shape
+ * Heart (Love) - 3D heart shape using parametric approach
  */
 function createHeart() {
     const shape = new THREE.Shape();
-    const x = 0, y = 0;
     
-    // Heart shape path
-    shape.moveTo(x, y + 0.5);
-    shape.bezierCurveTo(x, y + 0.5, x - 0.5, y, x - 0.5, y);
-    shape.bezierCurveTo(x - 0.5, y - 0.35, x - 0.25, y - 0.55, x, y - 0.8);
-    shape.bezierCurveTo(x + 0.25, y - 0.55, x + 0.5, y - 0.35, x + 0.5, y);
-    shape.bezierCurveTo(x + 0.5, y, x, y + 0.5, x, y + 0.5);
+    // Create a proper heart shape using the heart curve equation
+    // x = 16 * sin³(t)
+    // y = 13 * cos(t) - 5 * cos(2t) - 2 * cos(3t) - cos(4t)
+    const scale = 0.06;
+    const segments = 50;
+    
+    // Start at the bottom point of the heart
+    const startX = 0;
+    const startY = -16 * scale; // Bottom point
+    shape.moveTo(startX, startY);
+    
+    // Draw the heart shape
+    for (let i = 0; i <= segments; i++) {
+        const t = (i / segments) * Math.PI * 2 - Math.PI / 2;
+        const x = 16 * Math.pow(Math.sin(t), 3) * scale;
+        const y = (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * scale;
+        
+        if (i === 0) {
+            shape.moveTo(x, y);
+        } else {
+            shape.lineTo(x, y);
+        }
+    }
+    
+    shape.closePath();
     
     const extrudeSettings = {
-        depth: 0.35,
+        depth: 0.5,
         bevelEnabled: true,
-        bevelThickness: 0.1,
-        bevelSize: 0.08,
+        bevelThickness: 0.15,
+        bevelSize: 0.12,
         bevelOffset: 0,
-        bevelSegments: 5
+        bevelSegments: 8,
+        curveSegments: 32
     };
     
     const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
     geometry.center();
-    geometry.scale(2.5, 2.5, 2.5);
-    geometry.rotateX(Math.PI);
-    geometry.rotateZ(Math.PI);
+    geometry.scale(1.8, 1.8, 1.8);
+    geometry.rotateZ(Math.PI); // Flip so point is at bottom
     
     return geometry;
 }
